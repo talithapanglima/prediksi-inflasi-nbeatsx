@@ -536,109 +536,162 @@ elif nav == "📤 Upload & Forecast":
                                     label_visibility="collapsed")
 
     hist_df = None
-    if uploaded:
-        req = ['ds', 'y', 'Harga Minyak Dunia', 'BI Rate', 'Kurs USD/IDR']
-        df_up, err = parse_upload(uploaded, req)
-        if err:
-            st.markdown(f"<div class='alert-err'>⚠️ {err}</div>", unsafe_allow_html=True)
-        else:
-            for col in FUTR_EXOG:
-                if col not in df_up.columns:
-                    df_up[col] = df_up['ds'].apply(lambda d: auto_dummies(d)[col])
+if uploaded:
+    req = ['ds', 'y', 'Harga Minyak Dunia', 'BI Rate', 'Kurs USD/IDR']
+    df_up, err = parse_upload(uploaded, req)
 
-            # ── Auto-detect apakah y dalam desimal atau persen ──────
-            y_raw = df_up['y'].values
-            if np.mean(np.abs(y_raw)) > 1.0:
-                # User upload dalam persen (misal 3.72) → konversi ke desimal dulu
-                df_up['y'] = df_up['y'] / 100.0
-                st.markdown("<div class='alert-warn'>ℹ️ Kolom <code>y</code> terdeteksi dalam bentuk <b>persen</b> — dikonversi otomatis ke desimal sebelum scaling.</div>",
-                            unsafe_allow_html=True)
+    if err:
+        st.markdown(f"<div class='alert-err'>⚠️ {err}</div>", unsafe_allow_html=True)
 
-            # Scale y dulu
-            df_up['y'] = scaler_y.transform(df_up[['y']]).flatten()
+    else:
+        # ── Tambahkan dummy jika tidak ada ─────────────────────────
+        for col in FUTR_EXOG:
+            if col not in df_up.columns:
+                df_up[col] = df_up['ds'].apply(lambda d: auto_dummies(d)[col])
 
-            # Hitung lag dari y yang sudah di-scale
-            df_up['lag1']  = df_up['y'].shift(1)
-            df_up['lag3']  = df_up['y'].shift(3)
-            df_up['lag6']  = df_up['y'].shift(6)
-            df_up['lag12'] = df_up['y'].shift(12)
-            df_up = df_up.dropna().reset_index(drop=True)
+        # ── DETEKSI FORMAT y (persen vs desimal) ──────────────────
+        y_raw = df_up['y'].values
 
-            # Scale 7 kolom eksogen sekaligus
-            EXOG_SCALE_COLS = ['Harga Minyak Dunia','BI Rate','Kurs USD/IDR',
-                               'lag1','lag3','lag6','lag12']
-            df_up[EXOG_SCALE_COLS] = scaler_exog.transform(df_up[EXOG_SCALE_COLS])
+        # jika mayoritas nilai besar → kemungkinan persen
+        if np.percentile(np.abs(y_raw), 90) > 1:
+            df_up['y'] = df_up['y'] / 100.0
+            st.markdown(
+                "<div class='alert-warn'>ℹ️ Kolom <code>y</code> terdeteksi dalam bentuk <b>persen</b> — dikonversi ke desimal sebelum scaling.</div>",
+                unsafe_allow_html=True
+            )
 
-            df_up['unique_id'] = 'inflasi'
-            hist_df = df_up
+        # ── SCALE TARGET ──────────────────────────────────────────
+        df_up['y'] = scaler_y.transform(df_up[['y']]).flatten()
 
-            n  = len(hist_df)
-            d0 = hist_df['ds'].min().strftime('%b %Y')
-            d1 = hist_df['ds'].max().strftime('%b %Y')
-            st.markdown(f"<div class='alert-info'>✓ <b>{n} valid rows</b> · Period: <b>{d0} – {d1}</b></div>",
-                        unsafe_allow_html=True)
-            with st.expander("🔍 Preview (last 5 rows)", expanded=False):
-                disp = hist_df[['ds'] + FUTR_EXOG].tail(5).copy()
-                raw_y = scaler_y.inverse_transform(hist_df[['y']].tail(5)).flatten()
-                disp['inflation (%)'] = to_pct(raw_y)
-                st.dataframe(disp, use_container_width=True, hide_index=True)
+        # ── HITUNG LAG (pakai y yang sudah di-scale) ──────────────
+        df_up['lag1']  = df_up['y'].shift(1)
+        df_up['lag3']  = df_up['y'].shift(3)
+        df_up['lag6']  = df_up['y'].shift(6)
+        df_up['lag12'] = df_up['y'].shift(12)
+
+        df_up = df_up.dropna().reset_index(drop=True)
+
+        # ── SCALE EXOG (WAJIB urutan sama dengan training) ────────
+        EXOG_ORDER = ['Harga Minyak Dunia','BI Rate','Kurs USD/IDR',
+                      'lag1','lag3','lag6','lag12']
+
+        df_up[EXOG_ORDER] = scaler_exog.transform(df_up[EXOG_ORDER])
+
+        # ── FINAL FORMAT ──────────────────────────────────────────
+        df_up['unique_id'] = 'inflasi'
+        hist_df = df_up
+
+        # ── INFO ─────────────────────────────────────────────────
+        n  = len(hist_df)
+        d0 = hist_df['ds'].min().strftime('%b %Y')
+        d1 = hist_df['ds'].max().strftime('%b %Y')
+
+        st.markdown(
+            f"<div class='alert-info'>✓ <b>{n} valid rows</b> · Period: <b>{d0} – {d1}</b></div>",
+            unsafe_allow_html=True
+        )
+
+        # ── PREVIEW ───────────────────────────────────────────────
+        with st.expander("🔍 Preview (last 5 rows)", expanded=False):
+            disp = hist_df[['ds'] + FUTR_EXOG].tail(5).copy()
+
+            # inverse → kembali ke desimal → lalu tampilkan persen
+            raw_y = scaler_y.inverse_transform(hist_df[['y']].tail(5)).flatten()
+            disp['inflation (%)'] = to_pct(raw_y)
+
+            st.dataframe(disp, use_container_width=True, hide_index=True)
 
     # ── STEP 2 ──────────────────────────────────────────────────────
     if hist_df is not None:
         st.markdown("<br/><div class='step-badge'>◆ STEP 2 — Horizon & Future Values</div>",
                     unsafe_allow_html=True)
 
-        last_ds      = hist_df['ds'].max()
-        next_months  = pd.date_range(start=last_ds + pd.DateOffset(months=1),
-                                     periods=6, freq='MS')
-        horizon      = st.slider("Months ahead to forecast", 1, 6, 3)
+        last_ds = hist_df['ds'].max()
+
+        # selalu generate 6 bulan (sesuai model h=6)
+        next_months = pd.date_range(
+            start=last_ds + pd.DateOffset(months=1),
+            periods=6,
+            freq='MS'
+        )
+
+        horizon = st.slider("Months ahead to forecast", 1, 6, 3)
         target_months = next_months[:horizon]
 
         st.markdown(f"""<div class='alert-info'>
-          Forecasting: <b>{', '.join([m.strftime('%B %Y') for m in target_months])}</b>
+        Forecasting: <b>{', '.join([m.strftime('%B %Y') for m in target_months])}</b>
         </div>""", unsafe_allow_html=True)
 
         future_rows = []
+
         for i, ds in enumerate(target_months):
             d = auto_dummies(ds)
-            with st.expander(f"📅  {ds.strftime('%B %Y')}", expanded=(i==0)):
+
+            with st.expander(f"📅  {ds.strftime('%B %Y')}", expanded=(i == 0)):
                 c1, c2, c3 = st.columns(3)
-                minyak = c1.number_input("Oil Price (USD/bbl)",   0.0,300.0, 80.0,1.0, key=f"m_{i}")
-                bi     = c2.number_input("BI Rate (%)",           0.0, 25.0,  6.0,0.25,key=f"b_{i}")
-                kurs   = c3.number_input("USD/IDR Exchange Rate",5000.0,30000.0,15500.0,50.0,key=f"k_{i}")
-                cd1,cd2,cd3,cd4 = st.columns(4)
+
+                minyak = c1.number_input(
+                    "Oil Price (USD/bbl)", 0.0, 300.0, 80.0, 1.0, key=f"m_{i}"
+                )
+
+                bi = c2.number_input(
+                    "BI Rate (%)", 0.0, 25.0, 6.0, 0.25, key=f"b_{i}"
+                )
+
+                kurs = c3.number_input(
+                    "USD/IDR Exchange Rate", 5000.0, 30000.0, 15500.0, 50.0, key=f"k_{i}"
+                )
+
+                cd1, cd2, cd3, cd4 = st.columns(4)
+
                 ram = cd1.checkbox("Ramadhan",  value=bool(d['Ramadhan']),  key=f"r_{i}")
                 fit = cd2.checkbox("Idulfitri", value=bool(d['Idulfitri']), key=f"f_{i}")
                 nat = cd3.checkbox("Natal",     value=bool(d['Natal']),     key=f"n_{i}")
                 iml = cd4.checkbox("Imlek",     value=bool(d['Imlek']),     key=f"im_{i}")
+
+            # simpan TANPA scaling dulu (scaling dilakukan di STEP 3)
             future_rows.append({
-                'ds': ds, 'unique_id': 'inflasi',
-                'Harga Minyak Dunia': minyak, 'BI Rate': bi, 'Kurs USD/IDR': kurs,
-                'Ramadhan': int(ram), 'Idulfitri': int(fit),
-                'Natal': int(nat), 'Imlek': int(iml),
+                'ds': ds,
+                'unique_id': 'inflasi',
+
+                # numeric exog (raw)
+                'Harga Minyak Dunia': float(minyak),
+                'BI Rate': float(bi),
+                'Kurs USD/IDR': float(kurs),
+
+                # dummy (tetap 0/1)
+                'Ramadhan': int(ram),
+                'Idulfitri': int(fit),
+                'Natal': int(nat),
+                'Imlek': int(iml),
             })
 
         # ── STEP 3 ──────────────────────────────────────────────────
         st.markdown("<br/><div class='step-badge'>◆ STEP 3 — Run Forecast</div>",
-                    unsafe_allow_html=True)
+            unsafe_allow_html=True)
+
         run = st.button("▶  Run Forecast")
 
         if run:
             with st.spinner("Running model inference…"):
                 try:
-                    # Selalu buat 6 baris future (h=6)
+                    # ── 1. Buat future 6 bulan ────────────────────────────
                     next_6 = pd.date_range(
                         start=hist_df['ds'].max() + pd.DateOffset(months=1),
-                        periods=6, freq='MS')
+                        periods=6,
+                        freq='MS'
+                    )
 
                     all_future_rows = []
+
                     for i, ds in enumerate(next_6):
                         if i < horizon:
                             row = future_rows[i].copy()
                         else:
                             d = auto_dummies(ds)
                             row = {
-                                'ds': ds, 'unique_id': 'inflasi',
+                                'ds': ds,
+                                'unique_id': 'inflasi',
                                 'Harga Minyak Dunia': future_rows[-1]['Harga Minyak Dunia'],
                                 'BI Rate':            future_rows[-1]['BI Rate'],
                                 'Kurs USD/IDR':       future_rows[-1]['Kurs USD/IDR'],
@@ -646,133 +699,104 @@ elif nav == "📤 Upload & Forecast":
                             }
                         all_future_rows.append(row)
 
+                    futr_df = pd.DataFrame(all_future_rows)
+
+                    # ── 2. Hitung lag dari historis ───────────────────────
                     lag_vals = compute_lags(hist_df['y'])
-                    futr_df  = pd.DataFrame(all_future_rows)
 
-                    futr_7col = np.column_stack([
-                        futr_df['Harga Minyak Dunia'].values,
-                        futr_df['BI Rate'].values,
-                        futr_df['Kurs USD/IDR'].values,
-                        np.full(6, lag_vals['lag1']),
-                        np.full(6, lag_vals['lag3']),
-                        np.full(6, lag_vals['lag6']),
-                        np.full(6, lag_vals['lag12']),
-                    ])
-                    futr_scaled = scaler_exog.transform(futr_7col)
+                    futr_df['lag1']  = lag_vals['lag1']
+                    futr_df['lag3']  = lag_vals['lag3']
+                    futr_df['lag6']  = lag_vals['lag6']
+                    futr_df['lag12'] = lag_vals['lag12']
 
-                    futr_df['Harga Minyak Dunia'] = futr_scaled[:, 0]
-                    futr_df['BI Rate']            = futr_scaled[:, 1]
-                    futr_df['Kurs USD/IDR']       = futr_scaled[:, 2]
-                    futr_df['lag1']               = futr_scaled[:, 3]
-                    futr_df['lag3']               = futr_scaled[:, 4]
-                    futr_df['lag6']               = futr_scaled[:, 5]
-                    futr_df['lag12']              = futr_scaled[:, 6]
+                    # ── 3. Scaling exogenous (WAJIB urutan sama training) ─
+                    EXOG_ORDER = ['Harga Minyak Dunia','BI Rate','Kurs USD/IDR',
+                                'lag1','lag3','lag6','lag12']
 
-                    futr_df   = futr_df[['unique_id','ds'] + ALL_EXOG]
+                    futr_df[EXOG_ORDER] = scaler_exog.transform(futr_df[EXOG_ORDER])
+
+                    # ── 4. Final format ───────────────────────────────────
+                    futr_df = futr_df[['unique_id','ds'] + ALL_EXOG]
                     hist_pred = hist_df[['unique_id','ds','y'] + ALL_EXOG].copy()
 
-                    
-                    preds     = nf.predict(df=hist_pred, futr_df=futr_df)
-                    pred_col  = [c for c in preds.columns if c not in ['unique_id','ds']][0]
+                    # ── 5. Predict ────────────────────────────────────────
+                    preds = nf.predict(df=hist_pred, futr_df=futr_df)
+
+                    pred_col = [c for c in preds.columns if c not in ['unique_id','ds']][0]
                     y_pred_sc = preds[pred_col].values[:horizon]
 
-                    # Inverse transform → desimal → persen
-                    y_pred_dec = scaler_y.inverse_transform(y_pred_sc.reshape(-1,1)).flatten()
-                    y_pred     = to_pct(y_pred_dec)
+                    # ── 6. Inverse scaling ────────────────────────────────
+                    y_pred_dec = scaler_y.inverse_transform(
+                        y_pred_sc.reshape(-1,1)
+                    ).flatten()
 
-                    # ── RESULTS ──────────────────────────────────────
+                    y_pred = to_pct(y_pred_dec)
+
+                    # ── RESULTS ──────────────────────────────────────────
                     st.markdown("---")
                     st.markdown("<div class='section-label'>Forecast Results</div>",
                                 unsafe_allow_html=True)
 
                     cols_res = st.columns(min(horizon, 3))
+
                     for i, (ds, yp) in enumerate(zip(target_months, y_pred)):
                         level, color, bg, badge_bg = inflation_level(yp)
+
                         with cols_res[i % 3]:
                             st.markdown(f"""<div class='result-block'
-                              style='border-left-color:{color};background:{bg};'>
-                              <div class='result-period'>{ds.strftime('%B %Y')}</div>
-                              <div class='result-value'>{yp:.2f}<span class='result-pct'>%</span></div>
-                              <span class='result-badge' style='background:{badge_bg};color:{color};'>
+                            style='border-left-color:{color};background:{bg};'>
+                            <div class='result-period'>{ds.strftime('%B %Y')}</div>
+                            <div class='result-value'>{yp:.2f}<span class='result-pct'>%</span></div>
+                            <span class='result-badge' style='background:{badge_bg};color:{color};'>
                                 {level}
-                              </span>
+                            </span>
                             </div>""", unsafe_allow_html=True)
 
-                    # Chart historis + prediksi
+                    # ── CHART ─────────────────────────────────────────────
                     st.markdown("<br/><div class='section-label'>Historical + Forecast Chart</div>",
                                 unsafe_allow_html=True)
+
                     last_24   = df_asli.tail(24)
                     last_24_y = to_pct(last_24['y_orig'].values)
 
                     fig2 = go.Figure()
+
                     fig2.add_trace(go.Scatter(
                         x=last_24['ds'], y=last_24_y,
-                        name="Historical (24 mo)", mode="lines",
-                        line=dict(color=C_HIST, width=2),
-                        fill="tozeroy", fillcolor="rgba(87,83,78,0.12)"
-                    ))
-                    fig2.add_trace(go.Scatter(
-                        x=[last_24['ds'].iloc[-1], target_months[0]],
-                        y=[last_24_y[-1], y_pred[0]],
+                        name="Historical (24 mo)",
                         mode="lines",
-                        line=dict(color="#3c3330", width=1.5, dash="dot"),
-                        showlegend=False
+                        line=dict(color=C_HIST, width=2),
+                        fill="tozeroy",
+                        fillcolor="rgba(87,83,78,0.12)"
                     ))
+
                     fig2.add_trace(go.Scatter(
-                        x=list(target_months), y=list(y_pred),
-                        name="N-BEATSx Forecast", mode="lines+markers",
+                        x=list(target_months),
+                        y=list(y_pred),
+                        name="Forecast",
+                        mode="lines+markers",
                         line=dict(color=C_PRED, width=2.5),
-                        marker=dict(color=C_PRED, size=9, symbol="diamond",
-                                    line=dict(color="#1c1917", width=1.5)),
-                        fill="tozeroy", fillcolor="rgba(74,222,128,0.07)"
+                        marker=dict(size=8)
                     ))
-                    fig2.add_hline(y=2, line_color="rgba(74,222,128,0.2)", line_dash="dash",
-                                   annotation_text="BI lower (2%)",
-                                   annotation_font_color="#78716c", annotation_font_size=10)
-                    fig2.add_hline(y=4, line_color="rgba(251,146,60,0.2)", line_dash="dash",
-                                   annotation_text="BI upper (4%)",
-                                   annotation_font_color="#78716c", annotation_font_size=10)
-                    fig2.update_layout(**plotly_base("Last 24 Months + Forecast (%)", height=360))
+
+                    fig2.update_layout(**plotly_base("Forecast (%)", height=360))
                     st.plotly_chart(fig2, use_container_width=True)
 
-                    # Bar chart
-                    st.markdown("<div class='section-label'>Forecast Comparison</div>",
-                                unsafe_allow_html=True)
-                    fig3 = go.Figure(go.Bar(
-                        x=[m.strftime("%b %Y") for m in target_months],
-                        y=list(y_pred),
-                        marker_color=[inflation_level(v)[1] for v in y_pred],
-                        marker_line_color="rgba(255,255,255,0.1)",
-                        marker_line_width=1,
-                        text=[f"{v:.2f}%" for v in y_pred],
-                        textposition="outside",
-                        textfont=dict(family="DM Mono", size=11, color="#e7e5e4"),
-                        width=0.5,
-                    ))
-                    fig3.add_hline(y=2, line_color="rgba(74,222,128,0.25)", line_dash="dash")
-                    fig3.add_hline(y=4, line_color="rgba(251,146,60,0.25)", line_dash="dash")
-                    fig3.update_layout(**plotly_base("Forecast per Month (%)", height=300))
-                    st.plotly_chart(fig3, use_container_width=True)
-
-                    # Tabel
+                    # ── TABLE ─────────────────────────────────────────────
                     st.markdown("<div class='section-label'>Forecast Table</div>",
                                 unsafe_allow_html=True)
+
                     result_df = pd.DataFrame({
-                        "Month":               [m.strftime("%B %Y") for m in target_months],
-                        "Forecast (%)":        np.round(y_pred, 4),
-                        "Oil Price (USD/bbl)": [r['Harga Minyak Dunia'] for r in future_rows[:horizon]],
-                        "BI Rate (%)":         [r['BI Rate']   for r in future_rows[:horizon]],
-                        "USD/IDR":             [r['Kurs USD/IDR'] for r in future_rows[:horizon]],
-                        "Ramadhan":            [r['Ramadhan']  for r in future_rows[:horizon]],
-                        "Idulfitri":           [r['Idulfitri'] for r in future_rows[:horizon]],
-                        "Natal":               [r['Natal']     for r in future_rows[:horizon]],
-                        "Imlek":               [r['Imlek']     for r in future_rows[:horizon]],
+                        "Month":        [m.strftime("%B %Y") for m in target_months],
+                        "Forecast (%)": np.round(y_pred, 4),
                     })
+
                     st.dataframe(result_df, use_container_width=True, hide_index=True)
 
                 except Exception as e:
                     st.markdown(f"<div class='alert-err'>❌ <b>Error:</b><br/><code>{e}</code></div>",
                                 unsafe_allow_html=True)
+
                     import traceback
                     with st.expander("Traceback"):
                         st.code(traceback.format_exc())
@@ -784,7 +808,7 @@ elif nav == "📤 Upload & Forecast":
 elif nav == "📊 Model Evaluation":
     st.markdown("""<div style='margin-bottom:2rem;'>
       <div class='hero-eyebrow'>Performance Metrics</div>
-      <div style='font-size:1.75rem;font-weight:700;color:#e7e5e4;letter-spacing:-.3px;'>Model Evaluation</div>
+      <div style='font-size:1.75rem;font-weight:700;color:#e7e5e4;'>Model Evaluation</div>
     </div>""", unsafe_allow_html=True)
 
     if not MODEL_OK:
@@ -793,80 +817,110 @@ elif nav == "📊 Model Evaluation":
 
     with st.spinner("Computing evaluation…"):
         try:
-            n_total    = len(full_df)
-            n_train    = int(n_total * 0.8)
+            # ── SPLIT DATA ─────────────────────────────
+            n_total = len(full_df)
+            n_train = int(n_total * 0.8)
+
             train_part = full_df.iloc[:n_train].copy()
             test_part  = full_df.iloc[n_train:].copy()
 
-            preds    = nf.predict(df=train_part,
-                                  futr_df=test_part[['unique_id','ds'] + ALL_EXOG])
+            # ── PASTIKAN URUTAN KOLOM SESUAI TRAINING ──
+            EXOG_ORDER = scaler_exog.feature_names_in_.tolist()
+
+            futr_df = test_part[['unique_id', 'ds'] + EXOG_ORDER].copy()
+
+            hist_df_eval = train_part[['unique_id','ds','y'] + EXOG_ORDER].copy()
+
+            # ── PREDICT ────────────────────────────────
+            preds = nf.predict(df=hist_df_eval, futr_df=futr_df)
+
             pred_col = [c for c in preds.columns if c not in ['unique_id','ds']][0]
-            n        = min(len(preds), len(test_part))
+
+            n = min(len(preds), len(test_part))
+
             y_pred_sc = preds[pred_col].values[:n]
             y_true_sc = test_part['y'].values[:n]
-            ds        = test_part['ds'].values[:n]
+            ds_vals   = test_part['ds'].values[:n]
 
+            # ── INVERSE SCALING ────────────────────────
             y_pred_dec = scaler_y.inverse_transform(y_pred_sc.reshape(-1,1)).flatten()
             y_true_dec = scaler_y.inverse_transform(y_true_sc.reshape(-1,1)).flatten()
+
             y_pred = to_pct(y_pred_dec)
             y_true = to_pct(y_true_dec)
 
-            mae      = np.mean(np.abs(y_true - y_pred))
-            rmse     = np.sqrt(np.mean((y_true - y_pred)**2))
-            smape_v  = smape(y_true, y_pred)
-            r2       = 1 - np.sum((y_true-y_pred)**2)/(np.sum((y_true-np.mean(y_true))**2)+1e-9)
+            # ── METRICS ────────────────────────────────
+            mae     = np.mean(np.abs(y_true - y_pred))
+            rmse    = np.sqrt(np.mean((y_true - y_pred)**2))
+            smape_v = smape(y_true, y_pred)
+            r2      = 1 - np.sum((y_true-y_pred)**2) / (np.sum((y_true-np.mean(y_true))**2) + 1e-9)
 
-            st.markdown("<div class='section-label'>Error Metrics — Pseudo Test Set (last 20%)</div>",
+            # ── DISPLAY METRICS ────────────────────────
+            st.markdown("<div class='section-label'>Error Metrics — Pseudo Test Set</div>",
                         unsafe_allow_html=True)
-            m1,m2,m3,m4 = st.columns(4)
-            m1.metric("MAE",   f"{mae:.4f}",   delta="Mean Absolute Error")
-            m2.metric("RMSE",  f"{rmse:.4f}",  delta="Root Mean Squared Error")
-            m3.metric("sMAPE", f"{smape_v:.2f}%", delta="Symmetric MAPE")
-            m4.metric("R²",    f"{r2:.4f}",    delta="Coefficient of Determination")
 
+            m1,m2,m3,m4 = st.columns(4)
+            m1.metric("MAE",   f"{mae:.4f}")
+            m2.metric("RMSE",  f"{rmse:.4f}")
+            m3.metric("sMAPE", f"{smape_v:.2f}%")
+            m4.metric("R²",    f"{r2:.4f}")
+
+            # ── PLOT ───────────────────────────────────
             st.markdown("<br/><div class='section-label'>Actual vs Forecast</div>",
                         unsafe_allow_html=True)
+
             fig4 = go.Figure()
-            fig4.add_trace(go.Scatter(x=ds, y=y_true, name="Actual",
-                mode="lines+markers", line=dict(color=C_ACTUAL, width=2),
-                marker=dict(size=5, color=C_ACTUAL)))
-            fig4.add_trace(go.Scatter(x=ds, y=y_pred, name="N-BEATSx Forecast",
-                mode="lines+markers", line=dict(color=C_PRED, width=2, dash="dot"),
-                marker=dict(size=6, symbol="diamond", color=C_PRED)))
+
+            fig4.add_trace(go.Scatter(
+                x=ds_vals, y=y_true,
+                name="Actual",
+                mode="lines+markers"
+            ))
+
+            fig4.add_trace(go.Scatter(
+                x=ds_vals, y=y_pred,
+                name="Forecast",
+                mode="lines+markers",
+                line=dict(dash="dot")
+            ))
+
             fig4.update_layout(**plotly_base("Actual vs Forecast (%)", height=340))
             st.plotly_chart(fig4, use_container_width=True)
 
+            # ── RESIDUAL ───────────────────────────────
             residuals = y_true - y_pred
+
             st.markdown("<div class='section-label'>Residual Analysis</div>",
                         unsafe_allow_html=True)
-            fig5 = make_subplots(rows=1, cols=2,
-                                 subplot_titles=["Residuals over Time","Distribution"])
-            fig5.add_trace(go.Scatter(x=ds, y=residuals, mode="lines+markers",
-                line=dict(color=C_HIST, width=1.5),
-                marker=dict(size=4, color=C_PRED)), row=1, col=1)
-            fig5.add_hline(y=0, line_color="rgba(74,222,128,0.35)",
-                           line_dash="dash", row=1, col=1)
-            fig5.add_trace(go.Histogram(x=residuals, nbinsx=14,
-                marker_color="rgba(74,222,128,0.25)",
-                marker_line_color=C_PRED, marker_line_width=1), row=1, col=2)
-            fig5.update_layout(
-                plot_bgcolor=PLOT_BG, paper_bgcolor=PLOT_PAPER,
-                font=dict(family="DM Sans", color="#78716c", size=11),
-                height=280, showlegend=False,
-                margin=dict(l=10,r=10,t=40,b=10)
-            )
-            fig5.update_xaxes(gridcolor=PLOT_GRID)
-            fig5.update_yaxes(gridcolor=PLOT_GRID)
+
+            fig5 = make_subplots(rows=1, cols=2)
+
+            fig5.add_trace(go.Scatter(
+                x=ds_vals, y=residuals,
+                mode="lines+markers"
+            ), row=1, col=1)
+
+            fig5.add_hline(y=0, line_dash="dash", row=1, col=1)
+
+            fig5.add_trace(go.Histogram(
+                x=residuals, nbinsx=15
+            ), row=1, col=2)
+
+            fig5.update_layout(height=280)
             st.plotly_chart(fig5, use_container_width=True)
 
-            st.markdown("<div class='section-label'>Detail Table</div>", unsafe_allow_html=True)
+            # ── TABLE ──────────────────────────────────
+            st.markdown("<div class='section-label'>Detail Table</div>",
+                        unsafe_allow_html=True)
+
             tbl = pd.DataFrame({
-                "Month":        pd.to_datetime(ds).strftime("%b %Y"),
-                "Actual (%)":  np.round(y_true, 4),
-                "Forecast (%)":np.round(y_pred, 4),
-                "Error":       np.round(residuals, 4),
-                "APE (%)":     np.round(np.abs(residuals/(y_true+1e-9))*100, 2),
+                "Month": pd.to_datetime(ds_vals).strftime("%b %Y"),
+                "Actual (%)": np.round(y_true, 4),
+                "Forecast (%)": np.round(y_pred, 4),
+                "Error": np.round(residuals, 4),
+                "APE (%)": np.round(np.abs(residuals/(y_true+1e-9))*100, 2),
             })
+
             st.dataframe(tbl, use_container_width=True, hide_index=True)
 
         except Exception as e:
@@ -880,52 +934,106 @@ elif nav == "📊 Model Evaluation":
 #  PAGE: DATA FORMAT GUIDE
 # ══════════════════════════════════════════════════════════════════
 elif nav == "📋 Data Format Guide":
-    st.markdown("""<div style='margin-bottom:2rem;'>
+
+    st.markdown("""
+    <div style='margin-bottom:2rem;'>
       <div class='hero-eyebrow'>Documentation</div>
-      <div style='font-size:1.75rem;font-weight:700;color:#e7e5e4;letter-spacing:-.3px;'>Data Format Guide</div>
-    </div>""", unsafe_allow_html=True)
+      <div style='font-size:1.75rem;font-weight:700;color:#1c1917;'>
+        Data Format Guide
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
 
+    # ── FILE FORMAT ─────────────────────────────────────
     st.markdown("<div class='section-label'>Accepted File Formats</div>", unsafe_allow_html=True)
-    fa, fb = st.columns(2)
-    with fa:
-        st.markdown("""<div class='panel'>
-          <div style='color:#4ade80;font-weight:600;margin-bottom:.4rem;'>✓ CSV (.csv)</div>
-          <div style='font-size:.83rem;color:#78716c;'>Comma-separated, UTF-8, header on first row.</div>
-        </div>""", unsafe_allow_html=True)
-    with fb:
-        st.markdown("""<div class='panel'>
-          <div style='color:#4ade80;font-weight:600;margin-bottom:.4rem;'>✓ Excel (.xlsx)</div>
-          <div style='font-size:.83rem;color:#78716c;'>First sheet used, header on first row.</div>
-        </div>""", unsafe_allow_html=True)
 
+    fa, fb = st.columns(2)
+
+    with fa:
+        st.markdown("""
+        <div class='panel'>
+          <div style='color:#16a34a;font-weight:600;margin-bottom:.4rem;'>✓ CSV (.csv)</div>
+          <div style='font-size:.83rem;color:#6b7280;'>
+            Comma-separated, UTF-8, header on first row.
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with fb:
+        st.markdown("""
+        <div class='panel'>
+          <div style='color:#16a34a;font-weight:600;margin-bottom:.4rem;'>✓ Excel (.xlsx)</div>
+          <div style='font-size:.83rem;color:#6b7280;'>
+            First sheet used, header on first row.
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # ── FORMAT ──────────────────────────────────────────
     st.markdown("<br/><div class='section-label'>Expected Format</div>", unsafe_allow_html=True)
-    st.markdown("""<div class='template-code'>
-<span class='col-hi'>ds</span>,<span class='col-hi'>y</span>,<span class='col-hi'>Harga Minyak Dunia</span>,<span class='col-hi'>BI Rate</span>,<span class='col-hi'>Kurs USD/IDR</span>,<span class='col-opt'>Ramadhan</span>,<span class='col-opt'>Idulfitri</span>,<span class='col-opt'>Natal</span>,<span class='col-opt'>Imlek</span>
+
+    st.markdown("""
+    <div class='template-code'>
+ds,y,Harga Minyak Dunia,BI Rate,Kurs USD/IDR,Ramadhan,Idulfitri,Natal,Imlek
 2025-01-01,0.0257,75.23,6.00,15650,0,0,0,1
 2025-02-01,0.0281,76.80,6.00,15700,0,0,0,0
 2025-03-01,0.0305,81.10,6.00,15800,1,0,0,0
-</div>
-<div class='alert-info' style='margin-top:.5rem;'>
-  ℹ️ Kolom <code>y</code> bisa dalam <b>desimal</b> (0.0257) <b>atau persen</b> (2.57) — keduanya auto-detected.
-</div>""", unsafe_allow_html=True)
+    </div>
+    """, unsafe_allow_html=True)
 
+    st.markdown("""
+    <div class='alert-info'>
+      ℹ️ Kolom <code>y</code> bisa dalam:
+      <ul style='margin-top:.4rem;'>
+        <li><b>Desimal</b> → 0.0257</li>
+        <li><b>Persen</b> → 2.57</li>
+      </ul>
+      Sistem akan otomatis mendeteksi dan menyesuaikan.
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── COLUMN TABLE ────────────────────────────────────
     st.markdown("<br/><div class='section-label'>Column Reference</div>", unsafe_allow_html=True)
+
     kol_df = pd.DataFrame({
-        "Column":   ["ds","y","Harga Minyak Dunia","BI Rate","Kurs USD/IDR",
-                     "Ramadhan","Idulfitri","Natal","Imlek"],
-        "Type":     ["Date","Float","Float","Float","Float","0/1","0/1","0/1","0/1"],
-        "Example":  ["2025-01-01","0.0372 or 3.72","75.23","6.00","15650","1","0","0","0"],
-        "Required": ["✓","✓","✓","✓","✓","Optional","Optional","Optional","Optional"],
+        "Column": [
+            "ds","y","Harga Minyak Dunia","BI Rate","Kurs USD/IDR",
+            "Ramadhan","Idulfitri","Natal","Imlek"
+        ],
+        "Type": [
+            "Date","Float","Float","Float","Float",
+            "Binary","Binary","Binary","Binary"
+        ],
+        "Example": [
+            "2025-01-01","0.0372 or 3.72","75.23","6.00","15650",
+            "1","0","0","0"
+        ],
+        "Required": [
+            "Yes","Yes","Yes","Yes","Yes",
+            "Optional","Optional","Optional","Optional"
+        ],
     })
+
     st.dataframe(kol_df, use_container_width=True, hide_index=True)
 
-    st.markdown("""<div class='alert-warn' style='margin-top:1.25rem;'>
-      ⚠️ <b>Important:</b><br/>
-      • Data must be <b>monthly, sequential, and gap-free</b>.<br/>
-      • At least <b>12 rows</b> needed for lag features.<br/>
-      • Scaling is handled automatically — do not pre-scale your data.
-    </div>""", unsafe_allow_html=True)
+    # ── IMPORTANT NOTES ─────────────────────────────────
+    st.markdown("""
+    <div class='alert-warn'>
+      ⚠️ <b>Important:</b><br/><br/>
+      • Data harus <b>bulanan (monthly)</b><br/>
+      • Tidak boleh ada <b>missing month</b><br/>
+      • Minimal <b>12 observasi</b> (untuk lag features)<br/>
+      • Jangan melakukan <b>scaling manual</b> — sistem akan handle otomatis<br/>
+      • Pastikan urutan waktu <b>ascending</b>
+    </div>
+    """, unsafe_allow_html=True)
 
+    # ── DOWNLOAD TEMPLATE ───────────────────────────────
     st.markdown("<br/>", unsafe_allow_html=True)
-    st.download_button("⬇ Download Template CSV", make_template_csv(),
-                       "template.csv", "text/csv")
+
+    st.download_button(
+        "⬇ Download Template CSV",
+        make_template_csv(),
+        file_name="template_inflasi.csv",
+        mime="text/csv"
+    )
