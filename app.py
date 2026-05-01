@@ -406,27 +406,22 @@ elif nav == "📤 Upload & Prediksi":
             with st.spinner("Model sedang berjalan…"):
                 try:
                     # Scale eksogen masa depan
-                    futr_df = pd.DataFrame(future_rows)
-                    futr_exog_raw = futr_df[['Harga Minyak Dunia','BI Rate','Kurs USD/IDR']].values
-                    futr_df[['Harga Minyak Dunia','BI Rate','Kurs USD/IDR']] = \
-                        scaler_exog.transform(futr_exog_raw)
-
-                    # Hitung lag untuk futr (pakai nilai historis terakhir)
                     # Hitung lag dari y historis yang sudah scaled
                     lag_vals = compute_lags(hist_df['y'])
                     futr_df = pd.DataFrame(future_rows)
 
-                    # Scale makroekonomi masa depan — lag tidak di-scale untuk futr
-                    futr_mak = futr_df[['Harga Minyak Dunia', 'BI Rate', 'Kurs USD/IDR']].values
-                    # Buat array 7 kolom dengan lag dari historis
+                    # Buat array 7 kolom sesuai urutan training
                     futr_7col = np.column_stack([
-                        futr_mak,
+                        futr_df['Harga Minyak Dunia'].values,
+                        futr_df['BI Rate'].values,
+                        futr_df['Kurs USD/IDR'].values,
                         np.full(len(futr_df), lag_vals['lag1']),
                         np.full(len(futr_df), lag_vals['lag3']),
                         np.full(len(futr_df), lag_vals['lag6']),
                         np.full(len(futr_df), lag_vals['lag12']),
                     ])
                     futr_scaled = scaler_exog.transform(futr_7col)
+
                     futr_df['Harga Minyak Dunia'] = futr_scaled[:, 0]
                     futr_df['BI Rate']            = futr_scaled[:, 1]
                     futr_df['Kurs USD/IDR']       = futr_scaled[:, 2]
@@ -435,15 +430,13 @@ elif nav == "📤 Upload & Prediksi":
                     futr_df['lag6']               = futr_scaled[:, 5]
                     futr_df['lag12']              = futr_scaled[:, 6]
 
+                    futr_df = futr_df[['unique_id', 'ds'] + ALL_EXOG]
+
                     # hist_df untuk predict
                     hist_pred = hist_df[['unique_id','ds','y'] + ALL_EXOG].copy()
 
                     # Predict
                     preds    = nf.predict(df=hist_pred, futr_df=futr_df)
-                    pred_col = [c for c in preds.columns if c not in ['unique_id','ds']][0]
-                    y_pred_sc = preds[pred_col].values[:horizon]
-                    y_pred    = scaler_y.inverse_transform(
-                                    y_pred_sc.reshape(-1,1)).flatten() * 100  # ke persen
 
                     # ── TAMPILKAN ────────────────────────────────────
                     st.markdown("---")
