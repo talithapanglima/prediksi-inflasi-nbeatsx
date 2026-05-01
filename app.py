@@ -1067,7 +1067,7 @@ elif nav == "📤 Upload & Forecast":
 elif nav == "📊 Model Evaluation":
     st.markdown("""<div style='margin-bottom:2rem;'>
       <div class='hero-eyebrow'>Performance Metrics</div>
-      <div style='font-size:1.75rem;font-weight:700;color:#e7e5e4;'>Model Evaluation</div>
+      <div style='font-size:1.75rem;font-weight:700;color:#16a34a;;'>Model Evaluation</div>
     </div>""", unsafe_allow_html=True)
 
     if not MODEL_OK:
@@ -1114,19 +1114,15 @@ elif nav == "📊 Model Evaluation":
 
             # ── 5. METRICS ────────────────────────────────
             mae     = np.mean(np.abs(y_true - y_pred))
-            rmse    = np.sqrt(np.mean((y_true - y_pred)**2))
+            rmse    = np.sqrt(np.mean((y_true - y_pred) ** 2))
             smape_v = smape(y_true, y_pred)
-
-            denom = np.sum((y_true - np.mean(y_true))**2)
-            r2 = 1 - np.sum((y_true - y_pred)**2) / (denom + 1e-9)
 
             st.markdown("<div class='section-label'>Error Metrics — Pseudo Test Set</div>", unsafe_allow_html=True)
 
-            m1,m2,m3,m4 = st.columns(4)
-            m1.metric("MAE", f"{mae:.4f}")
-            m2.metric("RMSE", f"{rmse:.4f}")
+            m1, m2, m3 = st.columns(3)
+            m1.metric("MAE",   f"{mae:.4f}")
+            m2.metric("RMSE",  f"{rmse:.4f}")
             m3.metric("sMAPE", f"{smape_v:.2f}%")
-            m4.metric("R²", f"{r2:.4f}")
 
             # ── PLOT ───────────────────────────────────
             st.markdown("<br/><div class='section-label'>Actual vs Forecast</div>", unsafe_allow_html=True)
@@ -1134,6 +1130,7 @@ elif nav == "📊 Model Evaluation":
             fig4 = go.Figure()
             fig4.add_trace(go.Scatter(x=ds_vals, y=y_true, name="Actual", mode="lines+markers"))
             fig4.add_trace(go.Scatter(x=ds_vals, y=y_pred, name="Forecast", mode="lines+markers", line=dict(dash="dot")))
+
             fig4.update_layout(**plotly_base("Actual vs Forecast (%)", height=340))
             st.plotly_chart(fig4, use_container_width=True)
 
@@ -1161,8 +1158,7 @@ elif nav == "📊 Model Evaluation":
                 "Month": pd.to_datetime(ds_vals).strftime("%b %Y"),
                 "Actual (%)": np.round(y_true, 4),
                 "Forecast (%)": np.round(y_pred, 4),
-                "Error": np.round(residuals, 4),
-                "APE (%)": np.round(np.abs(residuals / (y_true + 1e-9)) * 100, 2),
+                "Residual": np.round(residuals, 4),
             })
 
             st.dataframe(tbl, use_container_width=True, hide_index=True)
@@ -1185,16 +1181,6 @@ elif nav == "📊 Model Evaluation":
     })
 
     st.dataframe(kol_df, use_container_width=True, hide_index=True)
-
-    # ── WARNING ─────────────────────────────────────────
-    st.markdown("""
-    <div class='alert-warn' style='margin-top:1.25rem;'>
-      ⚠️ <b>Important:</b><br/>
-      • Data harus <b>bulanan, berurutan, tanpa gap</b><br/>
-      • Minimal <b>12 baris</b> untuk lag features<br/>
-      • Jangan lakukan scaling manual (sudah otomatis)
-    </div>
-    """, unsafe_allow_html=True)
 
     st.markdown("<br/>", unsafe_allow_html=True)
 
