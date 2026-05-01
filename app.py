@@ -457,7 +457,7 @@ def load_everything():
     torch.load = patched_load
 
     # ── Load model ─────────────────────────────────────────────
-    nf = NeuralForecast.load(path=MODEL_PATH)
+    nf = NeuralForecast.load(path=str(MODEL_PATH))
 
     # ── Load scaler params ─────────────────────────────────────
     from sklearn.preprocessing import StandardScaler
