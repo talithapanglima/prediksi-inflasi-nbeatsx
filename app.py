@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+from sklearn.preprocessing import StandardScaler
 import pickle
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -177,13 +178,19 @@ def load_everything():
     sy_params  = np.load('saved_nbeatsx/scaler_y_params.npy',   allow_pickle=True).item()
     sex_params = np.load('saved_nbeatsx/scaler_exog_params.npy', allow_pickle=True).item()
 
-    scaler_y        = StandardScaler()
-    scaler_y.mean_  = sy_params['mean']
-    scaler_y.scale_ = sy_params['scale']
+    scaler_y = StandardScaler()
+    scaler_y.mean_           = sy_params['mean']
+    scaler_y.scale_          = sy_params['scale']
+    scaler_y.var_            = sy_params['var']
+    scaler_y.n_features_in_  = sy_params['n_features_in']
+    scaler_y.n_samples_seen_ = sy_params['n_samples_seen']
 
-    scaler_exog        = StandardScaler()
-    scaler_exog.mean_  = sex_params['mean']
-    scaler_exog.scale_ = sex_params['scale']
+    scaler_exog = StandardScaler()
+    scaler_exog.mean_           = sex_params['mean']
+    scaler_exog.scale_          = sex_params['scale']
+    scaler_exog.var_            = sex_params['var']
+    scaler_exog.n_features_in_  = sex_params['n_features_in']
+    scaler_exog.n_samples_seen_ = sex_params['n_samples_seen']
 
     with open(PARAMS_PATH, 'rb') as f: bp = pickle.load(f)
     full_df = pd.read_parquet(FULL_PATH)
@@ -327,21 +334,21 @@ elif nav == "📤 Upload & Prediksi":
                     df_up[col] = df_up['ds'].apply(lambda d: auto_dummies(d)[col])
 
             # Scale eksogen
-            exog_raw = df_up[['Harga Minyak Dunia','BI Rate','Kurs USD/IDR']].values
-            df_up[['Harga Minyak Dunia','BI Rate','Kurs USD/IDR']] = \
-                scaler_exog.transform(exog_raw)
-
-            # Scale y
+            # Scale y dulu
             df_up['y'] = scaler_y.transform(df_up[['y']]).flatten()
 
-            # Hitung lag dari y scaled
+            # Hitung lag dari y yang sudah di-scale
             df_up['lag1']  = df_up['y'].shift(1)
             df_up['lag3']  = df_up['y'].shift(3)
             df_up['lag6']  = df_up['y'].shift(6)
             df_up['lag12'] = df_up['y'].shift(12)
             df_up = df_up.dropna().reset_index(drop=True)
-            df_up['unique_id'] = 'inflasi'
 
+            # Scale 7 kolom eksogen sekaligus
+            EXOG_SCALE_COLS = ['Harga Minyak Dunia', 'BI Rate', 'Kurs USD/IDR', 'lag1', 'lag3', 'lag6', 'lag12']
+            df_up[EXOG_SCALE_COLS] = scaler_exog.transform(df_up[EXOG_SCALE_COLS])
+
+            df_up['unique_id'] = 'inflasi'
             hist_df = df_up
             n  = len(hist_df)
             d0 = hist_df['ds'].min().strftime('%b %Y')
@@ -405,11 +412,28 @@ elif nav == "📤 Upload & Prediksi":
                         scaler_exog.transform(futr_exog_raw)
 
                     # Hitung lag untuk futr (pakai nilai historis terakhir)
+                    # Hitung lag dari y historis yang sudah scaled
                     lag_vals = compute_lags(hist_df['y'])
-                    for col in ['lag1','lag3','lag6','lag12']:
-                        futr_df[col] = lag_vals[col]
+                    futr_df = pd.DataFrame(future_rows)
 
-                    futr_df = futr_df[['unique_id','ds'] + ALL_EXOG]
+                    # Scale makroekonomi masa depan — lag tidak di-scale untuk futr
+                    futr_mak = futr_df[['Harga Minyak Dunia', 'BI Rate', 'Kurs USD/IDR']].values
+                    # Buat array 7 kolom dengan lag dari historis
+                    futr_7col = np.column_stack([
+                        futr_mak,
+                        np.full(len(futr_df), lag_vals['lag1']),
+                        np.full(len(futr_df), lag_vals['lag3']),
+                        np.full(len(futr_df), lag_vals['lag6']),
+                        np.full(len(futr_df), lag_vals['lag12']),
+                    ])
+                    futr_scaled = scaler_exog.transform(futr_7col)
+                    futr_df['Harga Minyak Dunia'] = futr_scaled[:, 0]
+                    futr_df['BI Rate']            = futr_scaled[:, 1]
+                    futr_df['Kurs USD/IDR']       = futr_scaled[:, 2]
+                    futr_df['lag1']               = futr_scaled[:, 3]
+                    futr_df['lag3']               = futr_scaled[:, 4]
+                    futr_df['lag6']               = futr_scaled[:, 5]
+                    futr_df['lag12']              = futr_scaled[:, 6]
 
                     # hist_df untuk predict
                     hist_pred = hist_df[['unique_id','ds','y'] + ALL_EXOG].copy()
