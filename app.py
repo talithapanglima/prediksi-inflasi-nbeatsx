@@ -27,20 +27,23 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --bg:        #1c1917;
-  --surface:   #28211e;
-  --surface2:  #332b28;
-  --border:    rgba(255,255,255,0.08);
-  --border2:   rgba(255,255,255,0.04);
-  --accent:    #4ade80;
-  --accent-lt: rgba(74,222,128,0.08);
-  --accent2:   #fb923c;
-  --text:      #e7e5e4;
-  --muted:     #78716c;
-  --muted-lt:  #57534e;
-  --danger:    #f87171;
-  --warn:      #fb923c;
-  --good:      #4ade80;
+  --bg:        #f5f5f4;
+  --surface:   #ffffff;
+  --surface2:  #fafaf9;
+  --border:    rgba(0,0,0,0.08);
+  --border2:   rgba(0,0,0,0.04);
+
+  --accent:    #16a34a;
+  --accent-lt: rgba(22,163,74,0.08);
+  --accent2:   #ea580c;
+
+  --text:      #1c1917;
+  --muted:     #6b7280;
+  --muted-lt:  #9ca3af;
+
+  --danger:    #dc2626;
+  --warn:      #ea580c;
+  --good:      #16a34a;
 }
 
 html, body, [class*="css"] {
@@ -270,12 +273,13 @@ RAMADAN_MAP    = {2010:8,2011:8,2012:7,2013:7,2014:6,2015:6,2016:6,2017:5,
 IDUL_FITRI_MAP = {2010:9,2011:9,2012:8,2013:8,2014:7,2015:7,2016:7,2017:6,
                   2018:6,2019:6,2020:5,2021:5,2022:5,2023:4,2024:4,2025:3,2026:3,2027:3}
 
-PLOT_BG    = "#1c1917"
-PLOT_PAPER = "#28211e"
-PLOT_GRID  = "rgba(255,255,255,0.04)"
-C_HIST     = "#57534e"
-C_PRED     = "#4ade80"
-C_ACTUAL   = "#e7e5e4"
+PLOT_BG    = "#ffffff"
+PLOT_PAPER = "#ffffff"
+PLOT_GRID  = "rgba(0,0,0,0.05)"
+
+C_HIST     = "#6b7280"
+C_PRED     = "#16a34a"
+C_ACTUAL   = "#111827"
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -328,15 +332,14 @@ def smape(y_true, y_pred):
     denom = (np.abs(y_true) + np.abs(y_pred)) / 2
     return np.mean(num / (denom + 1e-9)) * 100
 
-def to_pct(y_orig_values):
-    """
-    Deteksi otomatis apakah y_orig dalam desimal (0.0372) atau persen (3.72).
-    Jika rata-rata > 1 → sudah dalam persen, tidak perlu dikali 100.
-    """
-    arr = np.array(y_orig_values)
-    if np.mean(np.abs(arr)) > 1.0:
-        return arr          # sudah dalam persen
-    return arr * 100        # konversi dari desimal ke persen
+def to_pct(y):
+    y = np.array(y)
+
+    # gunakan threshold realistis inflasi
+    # inflasi normal < 20%
+    if np.max(np.abs(y)) < 1:
+        return y * 100
+    return y
 
 def parse_upload(file, required_cols):
     try:
@@ -440,6 +443,8 @@ with st.sidebar:
 #  PAGE: HOME
 # ══════════════════════════════════════════════════════════════════
 if nav == "🏠 Home":
+    st.write("DEBUG y_orig mean:", np.mean(df_asli['y_orig']))
+    st.write("DEBUG y_orig sample:", df_asli['y_orig'].head())
     st.markdown("""<div class='hero'>
       <div class='hero-eyebrow'>Indonesia · Deep Learning Forecasting</div>
       <div class='hero-title'>Inflation Forecasting</div>
@@ -671,6 +676,7 @@ elif nav == "📤 Upload & Forecast":
                     y_pred_sc = preds[pred_col].values[:horizon]
 
                     # Inverse transform → desimal → persen
+                    st.write("DEBUG y_pred_dec:", y_pred_dec[:5])
                     y_pred_dec = scaler_y.inverse_transform(y_pred_sc.reshape(-1,1)).flatten()
                     y_pred     = to_pct(y_pred_dec)
 
