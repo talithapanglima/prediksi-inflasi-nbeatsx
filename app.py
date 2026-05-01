@@ -224,16 +224,14 @@ hr {
 #  CONSTANTS
 # ══════════════════════════════════════════════════════════════════
 # ── PATH CONFIG ─────────────────────────────────────
-from pathlib import Path
+BASE_DIR = "saved_nbeatsx"
 
-BASE_DIR = Path("saved_nbeatsx")
-
-MODEL_PATH   = BASE_DIR / "nf_model"
-SCALERY_PATH = BASE_DIR / "scaler_y.pkl"
-SCALERX_PATH = BASE_DIR / "scaler_exog.pkl"
-PARAMS_PATH  = BASE_DIR / "best_params_v2.pkl"
-FULL_PATH    = BASE_DIR / "full_df.parquet"
-ASLI_PATH    = BASE_DIR / "df_asli.parquet"
+MODEL_PATH   = f"{BASE_DIR}/nf_model"
+SCALERY_PATH = f"{BASE_DIR}/scaler_y.pkl"
+SCALERX_PATH = f"{BASE_DIR}/scaler_exog.pkl"
+PARAMS_PATH  = f"{BASE_DIR}/best_params_v2.pkl"
+FULL_PATH    = f"{BASE_DIR}/full_df.parquet"
+ASLI_PATH    = f"{BASE_DIR}/df_asli.parquet"
 
 # ── FEATURE CONFIG ──────────────────────────────────
 HIST_EXOG = [
