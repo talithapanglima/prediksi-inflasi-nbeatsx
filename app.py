@@ -671,12 +671,12 @@ elif nav == "📤 Upload & Forecast":
                     futr_df   = futr_df[['unique_id','ds'] + ALL_EXOG]
                     hist_pred = hist_df[['unique_id','ds','y'] + ALL_EXOG].copy()
 
+                    
                     preds     = nf.predict(df=hist_pred, futr_df=futr_df)
                     pred_col  = [c for c in preds.columns if c not in ['unique_id','ds']][0]
                     y_pred_sc = preds[pred_col].values[:horizon]
 
                     # Inverse transform → desimal → persen
-                    st.write("DEBUG y_pred_dec:", y_pred_dec[:5])
                     y_pred_dec = scaler_y.inverse_transform(y_pred_sc.reshape(-1,1)).flatten()
                     y_pred     = to_pct(y_pred_dec)
 
