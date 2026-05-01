@@ -159,7 +159,16 @@ def make_template_csv() -> bytes:
 #  LOAD MODEL
 # ══════════════════════════════════════════════════════════════════
 @st.cache_resource(show_spinner=False)
+@st.cache_resource(show_spinner=False)
 def load_everything():
+    # ── Patch untuk PyTorch 2.6+ ──────────────────────────────────
+    import torch
+    original_load = torch.load
+    def patched_load(*args, **kwargs):
+        kwargs.setdefault('weights_only', False)
+        return original_load(*args, **kwargs)
+    torch.load = patched_load
+
     nf = NeuralForecast.load(path=MODEL_PATH)
     with open(SCALERY_PATH, 'rb') as f: sy  = pickle.load(f)
     with open(SCALERX_PATH, 'rb') as f: sex = pickle.load(f)
