@@ -171,12 +171,25 @@ def load_everything():
     torch.load = patched_load
 
     nf = NeuralForecast.load(path=MODEL_PATH)
-    with open(SCALERY_PATH, 'rb') as f: sy  = pickle.load(f)
-    with open(SCALERX_PATH, 'rb') as f: sex = pickle.load(f)
-    with open(PARAMS_PATH,  'rb') as f: bp  = pickle.load(f)
+
+    # Rekonstruksi scaler dari numpy (kompatibel semua versi Python)
+    from sklearn.preprocessing import StandardScaler
+    sy_params  = np.load('saved_nbeatsx/scaler_y_params.npy',   allow_pickle=True).item()
+    sex_params = np.load('saved_nbeatsx/scaler_exog_params.npy', allow_pickle=True).item()
+
+    scaler_y        = StandardScaler()
+    scaler_y.mean_  = sy_params['mean']
+    scaler_y.scale_ = sy_params['scale']
+
+    scaler_exog        = StandardScaler()
+    scaler_exog.mean_  = sex_params['mean']
+    scaler_exog.scale_ = sex_params['scale']
+
+    with open(PARAMS_PATH, 'rb') as f: bp = pickle.load(f)
     full_df = pd.read_parquet(FULL_PATH)
     df_asli = pd.read_parquet(ASLI_PATH)
-    return nf, sy, sex, bp, full_df, df_asli
+
+    return nf, scaler_y, scaler_exog, bp, full_df, df_asli  # ← fix di sini
 
 with st.spinner("Memuat model N-BEATSx…"):
     try:
