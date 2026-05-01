@@ -2,9 +2,13 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import pickle
+import io
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from neuralforecast import NeuralForecast
-from neuralforecast.models import NBEATSx
+from datetime import datetime
+import warnings
+warnings.filterwarnings("ignore")
 
 # ── KONFIGURASI HALAMAN ───────────────────────────────────────────
 st.set_page_config(
