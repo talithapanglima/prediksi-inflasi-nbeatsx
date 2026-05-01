@@ -407,18 +407,42 @@ elif nav == "📤 Upload & Prediksi":
                 try:
                     # Scale eksogen masa depan
                     # Hitung lag dari y historis yang sudah scaled
+                    # Selalu buat 6 baris future (sesuai h=6 saat training)
+                    next_6_months = pd.date_range(
+                        start=hist_df['ds'].max() + pd.DateOffset(months=1),
+                        periods=6, freq='MS'
+                    )
+
+                    # Buat futr_df untuk semua 6 bulan
+                    all_future_rows = []
+                    for i, ds in enumerate(next_6_months):
+                        if i < horizon:
+                            # Pakai nilai yang diinput user
+                            row = future_rows[i].copy()
+                        else:
+                            # Pakai nilai default untuk bulan di luar horizon
+                            d = auto_dummies(ds)
+                            row = {
+                                'ds': ds, 'unique_id': 'inflasi',
+                                'Harga Minyak Dunia': future_rows[-1]['Harga Minyak Dunia'],
+                                'BI Rate':            future_rows[-1]['BI Rate'],
+                                'Kurs USD/IDR':       future_rows[-1]['Kurs USD/IDR'],
+                                **d
+                            }
+                        all_future_rows.append(row)
+
                     lag_vals = compute_lags(hist_df['y'])
-                    futr_df = pd.DataFrame(future_rows)
+                    futr_df  = pd.DataFrame(all_future_rows)
 
                     # Buat array 7 kolom sesuai urutan training
                     futr_7col = np.column_stack([
                         futr_df['Harga Minyak Dunia'].values,
                         futr_df['BI Rate'].values,
                         futr_df['Kurs USD/IDR'].values,
-                        np.full(len(futr_df), lag_vals['lag1']),
-                        np.full(len(futr_df), lag_vals['lag3']),
-                        np.full(len(futr_df), lag_vals['lag6']),
-                        np.full(len(futr_df), lag_vals['lag12']),
+                        np.full(6, lag_vals['lag1']),
+                        np.full(6, lag_vals['lag3']),
+                        np.full(6, lag_vals['lag6']),
+                        np.full(6, lag_vals['lag12']),
                     ])
                     futr_scaled = scaler_exog.transform(futr_7col)
 
@@ -435,8 +459,12 @@ elif nav == "📤 Upload & Prediksi":
                     # hist_df untuk predict
                     hist_pred = hist_df[['unique_id','ds','y'] + ALL_EXOG].copy()
 
-                    # Predict
-                    preds    = nf.predict(df=hist_pred, futr_df=futr_df)
+                    # Predict — ambil hanya sejumlah horizon yang dipilih user
+                    preds     = nf.predict(df=hist_pred, futr_df=futr_df)
+                    pred_col  = [c for c in preds.columns if c not in ['unique_id','ds']][0]
+                    y_pred_sc = preds[pred_col].values[:horizon]
+                    y_pred    = scaler_y.inverse_transform(
+                                    y_pred_sc.reshape(-1,1)).flatten() * 100
 
                     # ── TAMPILKAN ────────────────────────────────────
                     st.markdown("---")
