@@ -20,26 +20,27 @@ st.set_page_config(
 )
 
 # ══════════════════════════════════════════════════════════════════
-#  CSS — Warm neutral + teal accent, easy on the eyes
+#  CSS — Dark warm theme, easy on the eyes
 # ══════════════════════════════════════════════════════════════════
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --bg:        #f5f4f0;
-  --surface:   #ffffff;
-  --surface2:  #f0ede8;
-  --border:    #e2ddd8;
-  --accent:    #1a7f6e;
-  --accent-lt: #e8f4f1;
-  --accent2:   #c5633a;
-  --text:      #2c2825;
-  --muted:     #8a8078;
-  --muted-lt:  #b5afa8;
-  --danger:    #c0392b;
-  --warn:      #c5633a;
-  --good:      #1a7f6e;
+  --bg:        #1c1917;
+  --surface:   #28211e;
+  --surface2:  #332b28;
+  --border:    rgba(255,255,255,0.08);
+  --border2:   rgba(255,255,255,0.04);
+  --accent:    #4ade80;
+  --accent-lt: rgba(74,222,128,0.08);
+  --accent2:   #fb923c;
+  --text:      #e7e5e4;
+  --muted:     #78716c;
+  --muted-lt:  #57534e;
+  --danger:    #f87171;
+  --warn:      #fb923c;
+  --good:      #4ade80;
 }
 
 html, body, [class*="css"] {
@@ -49,7 +50,6 @@ html, body, [class*="css"] {
 }
 .block-container { padding: 2rem 2.5rem 3rem 2.5rem !important; max-width: 1300px; }
 
-/* ── Sidebar ── */
 [data-testid="stSidebar"] {
   background: var(--surface) !important;
   border-right: 1px solid var(--border) !important;
@@ -60,14 +60,14 @@ html, body, [class*="css"] {
 .hero {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-top: 4px solid var(--accent);
+  border-top: 3px solid var(--accent);
   padding: 2.5rem 3rem;
   margin-bottom: 2rem;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 .hero-eyebrow {
   font-family: 'DM Mono', monospace;
-  font-size: .65rem;
+  font-size: .62rem;
   letter-spacing: 2.5px;
   text-transform: uppercase;
   color: var(--accent);
@@ -82,17 +82,17 @@ html, body, [class*="css"] {
   margin-bottom: .75rem;
 }
 .hero-sub {
-  font-size: .9rem;
+  font-size: .88rem;
   color: var(--muted);
   max-width: 560px;
-  line-height: 1.7;
+  line-height: 1.75;
   font-weight: 300;
 }
 
 /* ── Section label ── */
 .section-label {
   font-family: 'DM Mono', monospace;
-  font-size: .6rem;
+  font-size: .58rem;
   letter-spacing: 2.5px;
   text-transform: uppercase;
   color: var(--muted-lt);
@@ -106,12 +106,12 @@ html, body, [class*="css"] {
   display: inline-flex;
   align-items: center;
   font-family: 'DM Mono', monospace;
-  font-size: .62rem;
+  font-size: .6rem;
   letter-spacing: 1.5px;
   text-transform: uppercase;
   color: var(--accent);
   background: var(--accent-lt);
-  border: 1px solid rgba(26,127,110,.2);
+  border: 1px solid rgba(74,222,128,0.2);
   padding: .3rem .85rem;
   border-radius: 100px;
   margin-bottom: 1rem;
@@ -121,7 +121,7 @@ html, body, [class*="css"] {
 .panel {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 6px;
   padding: 1.5rem;
   margin-bottom: 1.25rem;
 }
@@ -131,13 +131,13 @@ html, body, [class*="css"] {
   background: var(--surface);
   border: 1px solid var(--border);
   border-left: 4px solid var(--accent);
-  border-radius: 4px;
+  border-radius: 6px;
   padding: 1.5rem 1.75rem;
   margin-bottom: .75rem;
 }
 .result-period {
   font-family: 'DM Mono', monospace;
-  font-size: .62rem;
+  font-size: .6rem;
   letter-spacing: 2px;
   text-transform: uppercase;
   color: var(--muted);
@@ -157,50 +157,49 @@ html, body, [class*="css"] {
   padding: .2rem .75rem;
   border-radius: 100px;
   font-family: 'DM Mono', monospace;
-  font-size: .62rem;
+  font-size: .6rem;
   font-weight: 500;
-  letter-spacing: .5px;
 }
 
-/* ── Alert boxes ── */
+/* ── Alerts ── */
 .alert-info {
-  background: var(--accent-lt);
+  background: rgba(74,222,128,0.07);
   border-left: 3px solid var(--accent);
   padding: .85rem 1rem;
-  border-radius: 0 4px 4px 0;
+  border-radius: 0 6px 6px 0;
   font-size: .83rem;
   color: var(--text);
   margin: .75rem 0;
-  line-height: 1.6;
+  line-height: 1.65;
 }
 .alert-warn {
-  background: #fef3ee;
+  background: rgba(251,146,60,0.07);
   border-left: 3px solid var(--warn);
   padding: .85rem 1rem;
-  border-radius: 0 4px 4px 0;
+  border-radius: 0 6px 6px 0;
   font-size: .83rem;
   color: var(--text);
   margin: .75rem 0;
-  line-height: 1.6;
+  line-height: 1.65;
 }
 .alert-err {
-  background: #fdf0ef;
+  background: rgba(248,113,113,0.07);
   border-left: 3px solid var(--danger);
   padding: .85rem 1rem;
-  border-radius: 0 4px 4px 0;
+  border-radius: 0 6px 6px 0;
   font-size: .83rem;
   color: var(--text);
   margin: .75rem 0;
-  line-height: 1.6;
+  line-height: 1.65;
 }
 
-/* ── Template code block ── */
+/* ── Template code ── */
 .template-code {
   font-family: 'DM Mono', monospace;
   font-size: .72rem;
   background: var(--surface2);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 6px;
   padding: 1rem 1.25rem;
   color: var(--muted);
   overflow-x: auto;
@@ -212,12 +211,12 @@ html, body, [class*="css"] {
 /* ── Streamlit overrides ── */
 .stButton > button {
   background: var(--accent) !important;
-  color: #fff !important;
+  color: #1c1917 !important;
   border: none !important;
-  border-radius: 4px !important;
+  border-radius: 6px !important;
   font-family: 'DM Sans', sans-serif !important;
   font-size: .85rem !important;
-  font-weight: 600 !important;
+  font-weight: 700 !important;
   padding: .6rem 1.75rem !important;
   transition: opacity .15s !important;
 }
@@ -226,12 +225,12 @@ html, body, [class*="css"] {
 div[data-testid="stMetric"] {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 6px;
   padding: 1.1rem 1.25rem;
 }
 div[data-testid="stMetric"] label {
   color: var(--muted) !important;
-  font-size: .72rem !important;
+  font-size: .68rem !important;
   font-family: 'DM Mono', monospace !important;
   letter-spacing: 1px !important;
   text-transform: uppercase !important;
@@ -243,16 +242,11 @@ div[data-testid="stMetric"] [data-testid="stMetricValue"] {
 }
 
 hr { border-color: var(--border) !important; }
-
 [data-testid="stFileUploader"] {
   border: 1.5px dashed var(--border) !important;
-  border-radius: 4px !important;
+  border-radius: 6px !important;
   background: var(--surface) !important;
 }
-
-.stSelectbox > div > div,
-.stNumberInput > div > div > input,
-.stSlider { color: var(--text) !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -276,14 +270,12 @@ RAMADAN_MAP    = {2010:8,2011:8,2012:7,2013:7,2014:6,2015:6,2016:6,2017:5,
 IDUL_FITRI_MAP = {2010:9,2011:9,2012:8,2013:8,2014:7,2015:7,2016:7,2017:6,
                   2018:6,2019:6,2020:5,2021:5,2022:5,2023:4,2024:4,2025:3,2026:3,2027:3}
 
-# Plot colors — warm neutral palette
-PLOT_BG    = "#ffffff"
-PLOT_PAPER = "#ffffff"
-PLOT_GRID  = "rgba(0,0,0,0.05)"
-C_HIST     = "#c8c0b8"
-C_PRED     = "#1a7f6e"
-C_ACTUAL   = "#2c2825"
-C_WARN     = "#c5633a"
+PLOT_BG    = "#1c1917"
+PLOT_PAPER = "#28211e"
+PLOT_GRID  = "rgba(255,255,255,0.04)"
+C_HIST     = "#57534e"
+C_PRED     = "#4ade80"
+C_ACTUAL   = "#e7e5e4"
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -300,27 +292,27 @@ def auto_dummies(ds):
 
 def plotly_base(title="", height=320):
     return dict(
-        title=dict(text=title, font=dict(size=11, color="#8a8078", family="DM Mono"), x=0.01),
+        title=dict(text=title, font=dict(size=11, color="#78716c", family="DM Mono"), x=0.01),
         plot_bgcolor=PLOT_BG, paper_bgcolor=PLOT_PAPER,
-        font=dict(family="DM Sans", color="#8a8078", size=11),
-        xaxis=dict(gridcolor=PLOT_GRID, linecolor="rgba(0,0,0,0.08)",
+        font=dict(family="DM Sans", color="#78716c", size=11),
+        xaxis=dict(gridcolor=PLOT_GRID, linecolor="rgba(255,255,255,0.06)",
                    tickcolor="rgba(0,0,0,0)",
-                   tickfont=dict(family="DM Mono", size=10, color="#8a8078")),
-        yaxis=dict(gridcolor=PLOT_GRID, linecolor="rgba(0,0,0,0.08)",
+                   tickfont=dict(family="DM Mono", size=10, color="#78716c")),
+        yaxis=dict(gridcolor=PLOT_GRID, linecolor="rgba(255,255,255,0.06)",
                    tickcolor="rgba(0,0,0,0)", ticksuffix="%",
-                   tickfont=dict(family="DM Mono", size=10, color="#8a8078")),
-        legend=dict(bgcolor="rgba(255,255,255,0.9)",
-                    bordercolor="rgba(0,0,0,0.08)", borderwidth=1,
-                    font=dict(size=11, color="#2c2825")),
+                   tickfont=dict(family="DM Mono", size=10, color="#78716c")),
+        legend=dict(bgcolor="rgba(40,33,30,0.9)",
+                    bordercolor="rgba(255,255,255,0.08)", borderwidth=1,
+                    font=dict(size=11, color="#e7e5e4")),
         margin=dict(l=10, r=10, t=45, b=10),
         hovermode="x unified", height=height,
     )
 
 def inflation_level(v):
-    if v < 2.0:  return "RENDAH",             "#2563eb", "rgba(37,99,235,0.06)",  "#dbeafe"
-    if v <= 4.0: return "NORMAL — TARGET BI",  "#1a7f6e", "rgba(26,127,110,0.06)", "#e8f4f1"
-    if v <= 6.0: return "MODERAT TINGGI",      "#c5633a", "rgba(197,99,58,0.06)",  "#fef3ee"
-    return             "TINGGI",               "#c0392b", "rgba(192,57,43,0.06)",  "#fdf0ef"
+    if v < 2.0:  return "RENDAH",            "#60a5fa", "rgba(96,165,250,0.08)",  "rgba(96,165,250,0.15)"
+    if v <= 4.0: return "NORMAL — TARGET BI", "#4ade80", "rgba(74,222,128,0.08)",  "rgba(74,222,128,0.15)"
+    if v <= 6.0: return "MODERAT TINGGI",     "#fb923c", "rgba(251,146,60,0.08)",  "rgba(251,146,60,0.15)"
+    return             "TINGGI",              "#f87171", "rgba(248,113,113,0.08)", "rgba(248,113,113,0.15)"
 
 def compute_lags(series: pd.Series) -> dict:
     s = series.values
@@ -332,10 +324,19 @@ def compute_lags(series: pd.Series) -> dict:
     }
 
 def smape(y_true, y_pred):
-    """Symmetric Mean Absolute Percentage Error"""
     num   = np.abs(y_true - y_pred)
     denom = (np.abs(y_true) + np.abs(y_pred)) / 2
     return np.mean(num / (denom + 1e-9)) * 100
+
+def to_pct(y_orig_values):
+    """
+    Deteksi otomatis apakah y_orig dalam desimal (0.0372) atau persen (3.72).
+    Jika rata-rata > 1 → sudah dalam persen, tidak perlu dikali 100.
+    """
+    arr = np.array(y_orig_values)
+    if np.mean(np.abs(arr)) > 1.0:
+        return arr          # sudah dalam persen
+    return arr * 100        # konversi dari desimal ke persen
 
 def parse_upload(file, required_cols):
     try:
@@ -411,20 +412,18 @@ with st.spinner("Loading model…"):
 with st.sidebar:
     st.markdown("""
     <div style='padding:1.75rem 0 1.25rem 0;'>
-      <div style='font-family:"DM Mono",monospace;font-size:.6rem;letter-spacing:2.5px;
-                  color:#1a7f6e;text-transform:uppercase;margin-bottom:.5rem;'>N-BEATSx · Bayesian Opt</div>
-      <div style='font-size:1.25rem;font-weight:700;color:#2c2825;letter-spacing:-.3px;'>
+      <div style='font-family:"DM Mono",monospace;font-size:.58rem;letter-spacing:2.5px;
+                  color:#4ade80;text-transform:uppercase;margin-bottom:.5rem;'>N-BEATSx · Bayesian Opt</div>
+      <div style='font-size:1.2rem;font-weight:700;color:#e7e5e4;letter-spacing:-.3px;'>
         Inflation Forecasting</div>
-    </div>
-    <hr/>
-    """, unsafe_allow_html=True)
+    </div><hr/>""", unsafe_allow_html=True)
 
     nav = st.radio("Menu",
         ["🏠 Home", "📤 Upload & Forecast", "📊 Model Evaluation", "📋 Data Format Guide"],
         label_visibility="collapsed")
 
     st.markdown("""<hr/>
-    <div style='font-family:"DM Mono",monospace;font-size:.6rem;color:#b5afa8;line-height:2;'>
+    <div style='font-family:"DM Mono",monospace;font-size:.58rem;color:#57534e;line-height:2.1;'>
       MODEL&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;N-BEATSx<br/>
       OPTIMIZER&nbsp;Bayesian / Optuna<br/>
       DATA&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;189 monthly obs<br/>
@@ -432,8 +431,8 @@ with st.sidebar:
       FUTR EXOG&nbsp;Ramadan · Eid · Christmas · CNY
     </div>""", unsafe_allow_html=True)
     st.markdown("<div style='height:.75rem'></div>", unsafe_allow_html=True)
-    sc = "#1a7f6e" if MODEL_OK else "#c0392b"
-    st.markdown(f"<div style='font-family:\"DM Mono\",monospace;font-size:.6rem;color:{sc};'>● MODEL {'READY' if MODEL_OK else 'ERROR'}</div>",
+    sc = "#4ade80" if MODEL_OK else "#f87171"
+    st.markdown(f"<div style='font-family:\"DM Mono\",monospace;font-size:.58rem;color:{sc};'>● MODEL {'READY' if MODEL_OK else 'ERROR'}</div>",
                 unsafe_allow_html=True)
 
 
@@ -454,43 +453,44 @@ if nav == "🏠 Home":
                     unsafe_allow_html=True)
         st.stop()
 
-    # Stats — fix max inflasi dari y_orig asli
-    inv_y = df_asli['y_orig'].values
+    # Fix: gunakan to_pct() agar deteksi otomatis desimal vs persen
+    inv_y_pct = to_pct(df_asli['y_orig'].values)
+
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Total Observations", f"{len(df_asli)}")
     c2.metric("Period",
               f"{df_asli['ds'].min().strftime('%b %Y')} – {df_asli['ds'].max().strftime('%b %Y')}")
-    c3.metric("Average Inflation", f"{inv_y.mean()*100:.2f}%")
-    c4.metric("Max Inflation",     f"{inv_y.max()*100:.2f}%")
+    c3.metric("Average Inflation", f"{inv_y_pct.mean():.2f}%")
+    c4.metric("Max Inflation",     f"{inv_y_pct.max():.2f}%")
 
     st.markdown("<br/><div class='section-label'>Historical Inflation Data</div>",
                 unsafe_allow_html=True)
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(
-        x=df_asli['ds'], y=df_asli['y_orig']*100,
+        x=df_asli['ds'], y=inv_y_pct,
         name="Inflation (%)", mode="lines",
         line=dict(color=C_PRED, width=2),
-        fill="tozeroy", fillcolor="rgba(26,127,110,0.07)"
+        fill="tozeroy", fillcolor="rgba(74,222,128,0.07)"
     ))
-    fig.add_hline(y=2, line_color="rgba(26,127,110,0.3)", line_dash="dash")
-    fig.add_hline(y=4, line_color="rgba(197,99,58,0.3)",  line_dash="dash")
+    fig.add_hline(y=2, line_color="rgba(74,222,128,0.25)", line_dash="dash")
+    fig.add_hline(y=4, line_color="rgba(251,146,60,0.25)", line_dash="dash")
     fig.update_layout(**plotly_base("Monthly Inflation — % YoY", height=300))
     st.plotly_chart(fig, use_container_width=True)
 
     st.markdown("<br/><div class='section-label'>How It Works</div>", unsafe_allow_html=True)
     s1, s2, s3 = st.columns(3)
     for col, num, title, desc in [
-        (s1,"01","Upload Data",    "Upload a CSV/Excel file with your historical inflation data and macroeconomic variables."),
-        (s2,"02","Set Horizon",    "Choose 1–6 months ahead and input future exogenous variable values."),
-        (s3,"03","Get Forecast",   "View interactive charts and a detailed table of predicted inflation values."),
+        (s1,"01","Upload Data",   "Upload a CSV/Excel file with historical inflation data and macroeconomic variables."),
+        (s2,"02","Set Horizon",   "Choose 1–6 months ahead and input future exogenous variable values."),
+        (s3,"03","Get Forecast",  "View interactive charts and a detailed table of predicted inflation values."),
     ]:
         with col:
             st.markdown(f"""<div class='panel'>
-              <div style='font-family:"DM Mono",monospace;font-size:1.5rem;color:#e2ddd8;
+              <div style='font-family:"DM Mono",monospace;font-size:1.5rem;color:#3c3330;
                           font-weight:500;margin-bottom:.6rem;'>{num}</div>
-              <div style='font-weight:600;color:#2c2825;margin-bottom:.4rem;font-size:.95rem;'>{title}</div>
-              <div style='font-size:.83rem;color:#8a8078;line-height:1.7;'>{desc}</div>
+              <div style='font-weight:600;color:#e7e5e4;margin-bottom:.4rem;font-size:.92rem;'>{title}</div>
+              <div style='font-size:.82rem;color:#78716c;line-height:1.75;'>{desc}</div>
             </div>""", unsafe_allow_html=True)
 
 
@@ -500,8 +500,8 @@ if nav == "🏠 Home":
 elif nav == "📤 Upload & Forecast":
     st.markdown("""<div style='margin-bottom:2rem;'>
       <div class='hero-eyebrow'>Prediction Tool</div>
-      <div style='font-size:1.75rem;font-weight:700;color:#2c2825;letter-spacing:-.3px;'>Upload & Forecast</div>
-      <div style='font-size:.85rem;color:#8a8078;margin-top:.4rem;'>
+      <div style='font-size:1.75rem;font-weight:700;color:#e7e5e4;letter-spacing:-.3px;'>Upload & Forecast</div>
+      <div style='font-size:.85rem;color:#78716c;margin-top:.4rem;'>
         Upload historical data, set future exogenous values, and get your inflation forecast.
       </div>
     </div>""", unsafe_allow_html=True)
@@ -514,12 +514,12 @@ elif nav == "📤 Upload & Forecast":
     st.markdown("<div class='step-badge'>◆ STEP 1 — Upload Historical Data</div>",
                 unsafe_allow_html=True)
     st.markdown("""<div class='alert-info'>
-      Upload a CSV or Excel file with columns: 
+      Upload CSV/Excel with columns: 
       <code>ds</code>, <code>y</code>, <code>Harga Minyak Dunia</code>, 
       <code>BI Rate</code>, <code>Kurs USD/IDR</code><br/>
-      Calendar dummies (<code>Ramadhan</code>, <code>Idulfitri</code>, <code>Natal</code>, <code>Imlek</code>) 
-      are optional — auto-computed if absent.<br/>
-      <b>Value of <code>y</code> must be in decimal form</b> — e.g. 3.72% → write <code>0.0372</code>
+      Calendar dummies are optional — auto-computed if absent.<br/>
+      <b>Column <code>y</code></b>: decimal form e.g. 3.72% → <code>0.0372</code>, 
+      OR percent form e.g. <code>3.72</code> — both are auto-detected.
     </div>""", unsafe_allow_html=True)
 
     col_dl, col_up = st.columns([1, 2])
@@ -540,6 +540,14 @@ elif nav == "📤 Upload & Forecast":
             for col in FUTR_EXOG:
                 if col not in df_up.columns:
                     df_up[col] = df_up['ds'].apply(lambda d: auto_dummies(d)[col])
+
+            # ── Auto-detect apakah y dalam desimal atau persen ──────
+            y_raw = df_up['y'].values
+            if np.mean(np.abs(y_raw)) > 1.0:
+                # User upload dalam persen (misal 3.72) → konversi ke desimal dulu
+                df_up['y'] = df_up['y'] / 100.0
+                st.markdown("<div class='alert-warn'>ℹ️ Kolom <code>y</code> terdeteksi dalam bentuk <b>persen</b> — dikonversi otomatis ke desimal sebelum scaling.</div>",
+                            unsafe_allow_html=True)
 
             # Scale y dulu
             df_up['y'] = scaler_y.transform(df_up[['y']]).flatten()
@@ -564,14 +572,15 @@ elif nav == "📤 Upload & Forecast":
             d1 = hist_df['ds'].max().strftime('%b %Y')
             st.markdown(f"<div class='alert-info'>✓ <b>{n} valid rows</b> · Period: <b>{d0} – {d1}</b></div>",
                         unsafe_allow_html=True)
-            with st.expander("🔍 Preview uploaded data (last 5 rows)", expanded=False):
-                disp = hist_df[['ds','y'] + FUTR_EXOG].tail(5).copy()
-                disp['inflation (%)'] = scaler_y.inverse_transform(disp[['y']]).flatten() * 100
-                st.dataframe(disp.drop(columns=['y']), use_container_width=True, hide_index=True)
+            with st.expander("🔍 Preview (last 5 rows)", expanded=False):
+                disp = hist_df[['ds'] + FUTR_EXOG].tail(5).copy()
+                raw_y = scaler_y.inverse_transform(hist_df[['y']].tail(5)).flatten()
+                disp['inflation (%)'] = to_pct(raw_y)
+                st.dataframe(disp, use_container_width=True, hide_index=True)
 
     # ── STEP 2 ──────────────────────────────────────────────────────
     if hist_df is not None:
-        st.markdown("<br/><div class='step-badge'>◆ STEP 2 — Forecast Horizon & Future Values</div>",
+        st.markdown("<br/><div class='step-badge'>◆ STEP 2 — Horizon & Future Values</div>",
                     unsafe_allow_html=True)
 
         last_ds      = hist_df['ds'].max()
@@ -589,8 +598,8 @@ elif nav == "📤 Upload & Forecast":
             d = auto_dummies(ds)
             with st.expander(f"📅  {ds.strftime('%B %Y')}", expanded=(i==0)):
                 c1, c2, c3 = st.columns(3)
-                minyak = c1.number_input("Oil Price (USD/bbl)",  0.0,300.0, 80.0,1.0, key=f"m_{i}")
-                bi     = c2.number_input("BI Rate (%)",          0.0, 25.0,  6.0,0.25,key=f"b_{i}")
+                minyak = c1.number_input("Oil Price (USD/bbl)",   0.0,300.0, 80.0,1.0, key=f"m_{i}")
+                bi     = c2.number_input("BI Rate (%)",           0.0, 25.0,  6.0,0.25,key=f"b_{i}")
                 kurs   = c3.number_input("USD/IDR Exchange Rate",5000.0,30000.0,15500.0,50.0,key=f"k_{i}")
                 cd1,cd2,cd3,cd4 = st.columns(4)
                 ram = cd1.checkbox("Ramadhan",  value=bool(d['Ramadhan']),  key=f"r_{i}")
@@ -654,14 +663,16 @@ elif nav == "📤 Upload & Forecast":
                     futr_df['lag6']               = futr_scaled[:, 5]
                     futr_df['lag12']              = futr_scaled[:, 6]
 
-                    futr_df = futr_df[['unique_id','ds'] + ALL_EXOG]
+                    futr_df   = futr_df[['unique_id','ds'] + ALL_EXOG]
                     hist_pred = hist_df[['unique_id','ds','y'] + ALL_EXOG].copy()
 
                     preds     = nf.predict(df=hist_pred, futr_df=futr_df)
                     pred_col  = [c for c in preds.columns if c not in ['unique_id','ds']][0]
                     y_pred_sc = preds[pred_col].values[:horizon]
-                    y_pred    = scaler_y.inverse_transform(
-                                    y_pred_sc.reshape(-1,1)).flatten() * 100
+
+                    # Inverse transform → desimal → persen
+                    y_pred_dec = scaler_y.inverse_transform(y_pred_sc.reshape(-1,1)).flatten()
+                    y_pred     = to_pct(y_pred_dec)
 
                     # ── RESULTS ──────────────────────────────────────
                     st.markdown("---")
@@ -676,29 +687,29 @@ elif nav == "📤 Upload & Forecast":
                               style='border-left-color:{color};background:{bg};'>
                               <div class='result-period'>{ds.strftime('%B %Y')}</div>
                               <div class='result-value'>{yp:.2f}<span class='result-pct'>%</span></div>
-                              <span class='result-badge'
-                                style='background:{badge_bg};color:{color};'>
+                              <span class='result-badge' style='background:{badge_bg};color:{color};'>
                                 {level}
                               </span>
                             </div>""", unsafe_allow_html=True)
 
-                    # Line chart
+                    # Chart historis + prediksi
                     st.markdown("<br/><div class='section-label'>Historical + Forecast Chart</div>",
                                 unsafe_allow_html=True)
                     last_24   = df_asli.tail(24)
-                    last_24_y = last_24['y_orig'].values * 100
+                    last_24_y = to_pct(last_24['y_orig'].values)
 
                     fig2 = go.Figure()
                     fig2.add_trace(go.Scatter(
                         x=last_24['ds'], y=last_24_y,
                         name="Historical (24 mo)", mode="lines",
                         line=dict(color=C_HIST, width=2),
-                        fill="tozeroy", fillcolor="rgba(200,192,184,0.12)"
+                        fill="tozeroy", fillcolor="rgba(87,83,78,0.12)"
                     ))
                     fig2.add_trace(go.Scatter(
                         x=[last_24['ds'].iloc[-1], target_months[0]],
                         y=[last_24_y[-1], y_pred[0]],
-                        mode="lines", line=dict(color="#e2ddd8", width=1.5, dash="dot"),
+                        mode="lines",
+                        line=dict(color="#3c3330", width=1.5, dash="dot"),
                         showlegend=False
                     ))
                     fig2.add_trace(go.Scatter(
@@ -706,51 +717,50 @@ elif nav == "📤 Upload & Forecast":
                         name="N-BEATSx Forecast", mode="lines+markers",
                         line=dict(color=C_PRED, width=2.5),
                         marker=dict(color=C_PRED, size=9, symbol="diamond",
-                                    line=dict(color="white", width=1.5)),
-                        fill="tozeroy", fillcolor="rgba(26,127,110,0.08)"
+                                    line=dict(color="#1c1917", width=1.5)),
+                        fill="tozeroy", fillcolor="rgba(74,222,128,0.07)"
                     ))
-                    fig2.add_hline(y=2, line_color="rgba(26,127,110,0.25)", line_dash="dash",
-                                   annotation_text="BI lower target (2%)",
-                                   annotation_font_color="#8a8078", annotation_font_size=10)
-                    fig2.add_hline(y=4, line_color="rgba(197,99,58,0.25)", line_dash="dash",
-                                   annotation_text="BI upper target (4%)",
-                                   annotation_font_color="#8a8078", annotation_font_size=10)
+                    fig2.add_hline(y=2, line_color="rgba(74,222,128,0.2)", line_dash="dash",
+                                   annotation_text="BI lower (2%)",
+                                   annotation_font_color="#78716c", annotation_font_size=10)
+                    fig2.add_hline(y=4, line_color="rgba(251,146,60,0.2)", line_dash="dash",
+                                   annotation_text="BI upper (4%)",
+                                   annotation_font_color="#78716c", annotation_font_size=10)
                     fig2.update_layout(**plotly_base("Last 24 Months + Forecast (%)", height=360))
                     st.plotly_chart(fig2, use_container_width=True)
 
                     # Bar chart
                     st.markdown("<div class='section-label'>Forecast Comparison</div>",
                                 unsafe_allow_html=True)
-                    bar_colors = [inflation_level(v)[1] for v in y_pred]
                     fig3 = go.Figure(go.Bar(
                         x=[m.strftime("%b %Y") for m in target_months],
                         y=list(y_pred),
-                        marker_color=bar_colors,
-                        marker_line_color="white",
-                        marker_line_width=1.5,
+                        marker_color=[inflation_level(v)[1] for v in y_pred],
+                        marker_line_color="rgba(255,255,255,0.1)",
+                        marker_line_width=1,
                         text=[f"{v:.2f}%" for v in y_pred],
                         textposition="outside",
-                        textfont=dict(family="DM Mono", size=11, color="#2c2825"),
+                        textfont=dict(family="DM Mono", size=11, color="#e7e5e4"),
                         width=0.5,
                     ))
-                    fig3.add_hline(y=2, line_color="rgba(26,127,110,0.3)", line_dash="dash")
-                    fig3.add_hline(y=4, line_color="rgba(197,99,58,0.3)",  line_dash="dash")
+                    fig3.add_hline(y=2, line_color="rgba(74,222,128,0.25)", line_dash="dash")
+                    fig3.add_hline(y=4, line_color="rgba(251,146,60,0.25)", line_dash="dash")
                     fig3.update_layout(**plotly_base("Forecast per Month (%)", height=300))
                     st.plotly_chart(fig3, use_container_width=True)
 
-                    # Table
+                    # Tabel
                     st.markdown("<div class='section-label'>Forecast Table</div>",
                                 unsafe_allow_html=True)
                     result_df = pd.DataFrame({
-                        "Month":              [m.strftime("%B %Y") for m in target_months],
-                        "Forecast (%)":       np.round(y_pred, 4),
-                        "Oil Price (USD/bbl)":[r['Harga Minyak Dunia'] for r in future_rows[:horizon]],
-                        "BI Rate (%)":        [r['BI Rate']   for r in future_rows[:horizon]],
-                        "USD/IDR":            [r['Kurs USD/IDR'] for r in future_rows[:horizon]],
-                        "Ramadhan":           [r['Ramadhan']  for r in future_rows[:horizon]],
-                        "Idulfitri":          [r['Idulfitri'] for r in future_rows[:horizon]],
-                        "Natal":              [r['Natal']     for r in future_rows[:horizon]],
-                        "Imlek":              [r['Imlek']     for r in future_rows[:horizon]],
+                        "Month":               [m.strftime("%B %Y") for m in target_months],
+                        "Forecast (%)":        np.round(y_pred, 4),
+                        "Oil Price (USD/bbl)": [r['Harga Minyak Dunia'] for r in future_rows[:horizon]],
+                        "BI Rate (%)":         [r['BI Rate']   for r in future_rows[:horizon]],
+                        "USD/IDR":             [r['Kurs USD/IDR'] for r in future_rows[:horizon]],
+                        "Ramadhan":            [r['Ramadhan']  for r in future_rows[:horizon]],
+                        "Idulfitri":           [r['Idulfitri'] for r in future_rows[:horizon]],
+                        "Natal":               [r['Natal']     for r in future_rows[:horizon]],
+                        "Imlek":               [r['Imlek']     for r in future_rows[:horizon]],
                     })
                     st.dataframe(result_df, use_container_width=True, hide_index=True)
 
@@ -768,21 +778,17 @@ elif nav == "📤 Upload & Forecast":
 elif nav == "📊 Model Evaluation":
     st.markdown("""<div style='margin-bottom:2rem;'>
       <div class='hero-eyebrow'>Performance Metrics</div>
-      <div style='font-size:1.75rem;font-weight:700;color:#2c2825;letter-spacing:-.3px;'>Model Evaluation</div>
+      <div style='font-size:1.75rem;font-weight:700;color:#e7e5e4;letter-spacing:-.3px;'>Model Evaluation</div>
     </div>""", unsafe_allow_html=True)
 
     if not MODEL_OK:
         st.markdown("<div class='alert-err'>Model not loaded.</div>", unsafe_allow_html=True)
         st.stop()
 
-    st.markdown("""<div class='alert-info'>
-      Evaluation using the stored <b>full_df</b> — last 20% of data as pseudo test set.
-    </div>""", unsafe_allow_html=True)
-
     with st.spinner("Computing evaluation…"):
         try:
-            n_total   = len(full_df)
-            n_train   = int(n_total * 0.8)
+            n_total    = len(full_df)
+            n_train    = int(n_total * 0.8)
             train_part = full_df.iloc[:n_train].copy()
             test_part  = full_df.iloc[n_train:].copy()
 
@@ -794,61 +800,52 @@ elif nav == "📊 Model Evaluation":
             y_true_sc = test_part['y'].values[:n]
             ds        = test_part['ds'].values[:n]
 
-            y_pred = scaler_y.inverse_transform(y_pred_sc.reshape(-1,1)).flatten() * 100
-            y_true = scaler_y.inverse_transform(y_true_sc.reshape(-1,1)).flatten() * 100
+            y_pred_dec = scaler_y.inverse_transform(y_pred_sc.reshape(-1,1)).flatten()
+            y_true_dec = scaler_y.inverse_transform(y_true_sc.reshape(-1,1)).flatten()
+            y_pred = to_pct(y_pred_dec)
+            y_true = to_pct(y_true_dec)
 
-            mae   = np.mean(np.abs(y_true - y_pred))
-            rmse  = np.sqrt(np.mean((y_true - y_pred)**2))
-            smape_val = smape(y_true, y_pred)
-            r2    = 1 - np.sum((y_true-y_pred)**2) / (np.sum((y_true-np.mean(y_true))**2)+1e-9)
+            mae      = np.mean(np.abs(y_true - y_pred))
+            rmse     = np.sqrt(np.mean((y_true - y_pred)**2))
+            smape_v  = smape(y_true, y_pred)
+            r2       = 1 - np.sum((y_true-y_pred)**2)/(np.sum((y_true-np.mean(y_true))**2)+1e-9)
 
-            st.markdown("<div class='section-label'>Error Metrics — Pseudo Test Set</div>",
+            st.markdown("<div class='section-label'>Error Metrics — Pseudo Test Set (last 20%)</div>",
                         unsafe_allow_html=True)
             m1,m2,m3,m4 = st.columns(4)
-            m1.metric("MAE",   f"{mae:.4f}",      delta="Mean Absolute Error")
-            m2.metric("RMSE",  f"{rmse:.4f}",     delta="Root Mean Squared Error")
-            m3.metric("sMAPE", f"{smape_val:.2f}%",delta="Symmetric MAPE")
-            m4.metric("R²",    f"{r2:.4f}",        delta="Coefficient of Determination")
+            m1.metric("MAE",   f"{mae:.4f}",   delta="Mean Absolute Error")
+            m2.metric("RMSE",  f"{rmse:.4f}",  delta="Root Mean Squared Error")
+            m3.metric("sMAPE", f"{smape_v:.2f}%", delta="Symmetric MAPE")
+            m4.metric("R²",    f"{r2:.4f}",    delta="Coefficient of Determination")
 
             st.markdown("<br/><div class='section-label'>Actual vs Forecast</div>",
                         unsafe_allow_html=True)
             fig4 = go.Figure()
-            fig4.add_trace(go.Scatter(
-                x=ds, y=y_true, name="Actual",
-                mode="lines+markers",
-                line=dict(color=C_ACTUAL, width=2),
-                marker=dict(size=5, color=C_ACTUAL)
-            ))
-            fig4.add_trace(go.Scatter(
-                x=ds, y=y_pred, name="N-BEATSx Forecast",
-                mode="lines+markers",
-                line=dict(color=C_PRED, width=2, dash="dot"),
-                marker=dict(size=6, symbol="diamond", color=C_PRED)
-            ))
+            fig4.add_trace(go.Scatter(x=ds, y=y_true, name="Actual",
+                mode="lines+markers", line=dict(color=C_ACTUAL, width=2),
+                marker=dict(size=5, color=C_ACTUAL)))
+            fig4.add_trace(go.Scatter(x=ds, y=y_pred, name="N-BEATSx Forecast",
+                mode="lines+markers", line=dict(color=C_PRED, width=2, dash="dot"),
+                marker=dict(size=6, symbol="diamond", color=C_PRED)))
             fig4.update_layout(**plotly_base("Actual vs Forecast (%)", height=340))
             st.plotly_chart(fig4, use_container_width=True)
 
-            # Residuals
             residuals = y_true - y_pred
             st.markdown("<div class='section-label'>Residual Analysis</div>",
                         unsafe_allow_html=True)
             fig5 = make_subplots(rows=1, cols=2,
-                                 subplot_titles=["Residuals over Time","Residual Distribution"])
-            fig5.add_trace(go.Scatter(
-                x=ds, y=residuals, mode="lines+markers",
+                                 subplot_titles=["Residuals over Time","Distribution"])
+            fig5.add_trace(go.Scatter(x=ds, y=residuals, mode="lines+markers",
                 line=dict(color=C_HIST, width=1.5),
-                marker=dict(size=4, color=C_PRED)
-            ), row=1, col=1)
-            fig5.add_hline(y=0, line_color="rgba(26,127,110,0.4)",
+                marker=dict(size=4, color=C_PRED)), row=1, col=1)
+            fig5.add_hline(y=0, line_color="rgba(74,222,128,0.35)",
                            line_dash="dash", row=1, col=1)
-            fig5.add_trace(go.Histogram(
-                x=residuals, nbinsx=14,
-                marker_color="rgba(26,127,110,0.3)",
-                marker_line_color=C_PRED, marker_line_width=1
-            ), row=1, col=2)
+            fig5.add_trace(go.Histogram(x=residuals, nbinsx=14,
+                marker_color="rgba(74,222,128,0.25)",
+                marker_line_color=C_PRED, marker_line_width=1), row=1, col=2)
             fig5.update_layout(
                 plot_bgcolor=PLOT_BG, paper_bgcolor=PLOT_PAPER,
-                font=dict(family="DM Sans", color="#8a8078", size=11),
+                font=dict(family="DM Sans", color="#78716c", size=11),
                 height=280, showlegend=False,
                 margin=dict(l=10,r=10,t=40,b=10)
             )
@@ -879,20 +876,20 @@ elif nav == "📊 Model Evaluation":
 elif nav == "📋 Data Format Guide":
     st.markdown("""<div style='margin-bottom:2rem;'>
       <div class='hero-eyebrow'>Documentation</div>
-      <div style='font-size:1.75rem;font-weight:700;color:#2c2825;letter-spacing:-.3px;'>Data Format Guide</div>
+      <div style='font-size:1.75rem;font-weight:700;color:#e7e5e4;letter-spacing:-.3px;'>Data Format Guide</div>
     </div>""", unsafe_allow_html=True)
 
     st.markdown("<div class='section-label'>Accepted File Formats</div>", unsafe_allow_html=True)
     fa, fb = st.columns(2)
     with fa:
         st.markdown("""<div class='panel'>
-          <div style='color:#1a7f6e;font-weight:600;margin-bottom:.4rem;'>✓ CSV (.csv)</div>
-          <div style='font-size:.83rem;color:#8a8078;'>Comma-separated, UTF-8 encoding, header on first row.</div>
+          <div style='color:#4ade80;font-weight:600;margin-bottom:.4rem;'>✓ CSV (.csv)</div>
+          <div style='font-size:.83rem;color:#78716c;'>Comma-separated, UTF-8, header on first row.</div>
         </div>""", unsafe_allow_html=True)
     with fb:
         st.markdown("""<div class='panel'>
-          <div style='color:#1a7f6e;font-weight:600;margin-bottom:.4rem;'>✓ Excel (.xlsx)</div>
-          <div style='font-size:.83rem;color:#8a8078;'>First sheet used, header on first row.</div>
+          <div style='color:#4ade80;font-weight:600;margin-bottom:.4rem;'>✓ Excel (.xlsx)</div>
+          <div style='font-size:.83rem;color:#78716c;'>First sheet used, header on first row.</div>
         </div>""", unsafe_allow_html=True)
 
     st.markdown("<br/><div class='section-label'>Expected Format</div>", unsafe_allow_html=True)
@@ -901,27 +898,26 @@ elif nav == "📋 Data Format Guide":
 2025-01-01,0.0257,75.23,6.00,15650,0,0,0,1
 2025-02-01,0.0281,76.80,6.00,15700,0,0,0,0
 2025-03-01,0.0305,81.10,6.00,15800,1,0,0,0
-2025-04-01,0.0289,84.50,6.25,15750,0,1,0,0
 </div>
-<div class='alert-warn' style='margin-top:.5rem;'>
-  ⚠️ Column <code>y</code> must be in <b>decimal form</b> — e.g. 2.57% → write <code>0.0257</code>
+<div class='alert-info' style='margin-top:.5rem;'>
+  ℹ️ Kolom <code>y</code> bisa dalam <b>desimal</b> (0.0257) <b>atau persen</b> (2.57) — keduanya auto-detected.
 </div>""", unsafe_allow_html=True)
 
     st.markdown("<br/><div class='section-label'>Column Reference</div>", unsafe_allow_html=True)
     kol_df = pd.DataFrame({
         "Column":   ["ds","y","Harga Minyak Dunia","BI Rate","Kurs USD/IDR",
                      "Ramadhan","Idulfitri","Natal","Imlek"],
-        "Type":     ["Date","Float (decimal)","Float","Float","Float","0/1","0/1","0/1","0/1"],
-        "Example":  ["2025-01-01","0.0372","75.23","6.00","15650","1","0","0","0"],
+        "Type":     ["Date","Float","Float","Float","Float","0/1","0/1","0/1","0/1"],
+        "Example":  ["2025-01-01","0.0372 or 3.72","75.23","6.00","15650","1","0","0","0"],
         "Required": ["✓","✓","✓","✓","✓","Optional","Optional","Optional","Optional"],
     })
     st.dataframe(kol_df, use_container_width=True, hide_index=True)
 
     st.markdown("""<div class='alert-warn' style='margin-top:1.25rem;'>
-      ⚠️ <b>Important notes:</b><br/>
-      • Column <code>y</code> must contain <b>raw inflation values</b> (not scaled). Scaling is done automatically.<br/>
+      ⚠️ <b>Important:</b><br/>
       • Data must be <b>monthly, sequential, and gap-free</b>.<br/>
-      • At least <b>12 rows</b> are needed to compute lag features correctly.
+      • At least <b>12 rows</b> needed for lag features.<br/>
+      • Scaling is handled automatically — do not pre-scale your data.
     </div>""", unsafe_allow_html=True)
 
     st.markdown("<br/>", unsafe_allow_html=True)
