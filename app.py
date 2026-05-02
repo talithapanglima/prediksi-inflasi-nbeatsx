@@ -1194,20 +1194,6 @@ elif nav == "📊 Model Evaluation":
             with st.expander("Detail Error"):
                 st.code(traceback.format_exc())
 
-    # ── TABLE REFERENCE ─────────────────────────────────
-    st.markdown("<br/><div class='section-label'>Column Reference</div>", unsafe_allow_html=True)
-
-    kol_df = pd.DataFrame({
-        "Column":   ["ds","y","Harga Minyak Dunia","BI Rate","Kurs USD/IDR",
-                     "Ramadhan","Idulfitri","Natal","Imlek"],
-        "Type":     ["Date","Float","Float","Float","Float","0/1","0/1","0/1","0/1"],
-        "Required": ["✓","✓","✓","✓","✓","Optional","Optional","Optional","Optional"],
-    })
-
-    st.dataframe(kol_df, use_container_width=True, hide_index=True)
-
-    st.markdown("<br/>", unsafe_allow_html=True)
-
     st.download_button(
         "⬇ Download Template CSV",
         make_template_csv(),
