@@ -855,7 +855,7 @@ elif nav == "📤 Upload & Forecast":
 
                 # Urutkan kolom
                 disp = disp[['ds', 'Inflation (%)', 'Oil Price (USD)', 'BI Rate (%)',
-                            'USD/IDR', 'Ramadhan', 'Idulfitri', 'Natal', 'Imlek']]
+                            'Exchange Rate USD/IDR', 'Ramadhan', 'Idulfitri', 'Natal', 'Imlek']]
 
                 st.dataframe(disp, use_container_width=True, hide_index=True)
 
