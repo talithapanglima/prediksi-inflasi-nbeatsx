@@ -1012,41 +1012,7 @@ elif nav == "📤 Upload & Forecast":
                             </span>
                             </div>""", unsafe_allow_html=True)
 
-                    # ── 9. Chart ───────────────────────────────────
-                    st.markdown("<br/><div class='section-label'>Historical + Forecast Chart</div>",
-                                unsafe_allow_html=True)
-
-                    last_24   = df_asli.tail(24)
-                    last_24_y = to_pct(last_24['y_orig'].values)
-
-                    fig2 = go.Figure()
-                    fig2.add_trace(go.Scatter(
-                        x=last_24['ds'], y=last_24_y,
-                        name="Historical (24 mo)",
-                        mode="lines",
-                        line=dict(color=C_HIST, width=2),
-                        fill="tozeroy",
-                        fillcolor="rgba(87,83,78,0.12)"
-                    ))
-                    fig2.add_trace(go.Scatter(
-                        x=[last_24['ds'].iloc[-1], target_months[0]],
-                        y=[last_24_y[-1], y_pred[0]],
-                        mode="lines",
-                        line=dict(dash="dot", width=1),
-                        showlegend=False
-                    ))
-                    fig2.add_trace(go.Scatter(
-                        x=list(target_months),
-                        y=list(y_pred),
-                        name="Forecast",
-                        mode="lines+markers",
-                        line=dict(color=C_PRED, width=2.5),
-                        marker=dict(size=8)
-                    ))
-                    fig2.update_layout(**plotly_base("Forecast (%)", height=360))
-                    st.plotly_chart(fig2, use_container_width=True, key="chart_forecast")
-
-                    # ── 10. Table ──────────────────────────────────
+                    # ── 9. Table ──────────────────────────────────
                     st.markdown("<div class='section-label'>Forecast Table</div>",
                                 unsafe_allow_html=True)
 
@@ -1092,7 +1058,7 @@ elif nav == "📤 Upload & Forecast":
                     ))
 
                     fig2.update_layout(**plotly_base("Forecast (%)", height=360))
-                    st.plotly_chart(fig, use_container_width=True, key="chart_home")
+                    st.plotly_chart(fig2, use_container_width=True, key="chart_forecast")
 
                 except Exception as e:
                     st.markdown(
