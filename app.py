@@ -834,11 +834,11 @@ elif nav == "📤 Upload & Forecast":
             with st.expander("🔍 Preview (last 5 rows)", expanded=False):
                 disp = hist_df[['ds'] + FUTR_EXOG].tail(5).copy()
 
+                disp['inflation (%)'] = to_pct(raw_y)
+
                 raw_y = scaler_y.inverse_transform(
                     hist_df[['y']].tail(5)
                 ).flatten()
-
-                disp['inflation (%)'] = to_pct(raw_y)
 
                 st.dataframe(disp, use_container_width=True, hide_index=True)
 
@@ -911,94 +911,118 @@ elif nav == "📤 Upload & Forecast":
             })
 
        # ── STEP 3 ──────────────────────────────────────────────────
-        st.markdown("<br/><div class='step-badge'>◆ STEP 3 — Run Forecast</div>",
-                    unsafe_allow_html=True)
-
-        run = st.button("▶  Run Forecast")
-
         if run:
             with st.spinner("Running model inference…"):
                 try:
-                    # ── 1. Future 6 bulan (WAJIB sesuai model h=6) ─────────
+                    # ── 1. Future dates ───────────────────────────────────
                     next_6 = pd.date_range(
                         start=hist_df['ds'].max() + pd.DateOffset(months=1),
-                        periods=6,
-                        freq='MS'
+                        periods=6, freq='MS'
                     )
 
+                    # ── 2. Susun future_rows ──────────────────────────────
                     all_future_rows = []
-
                     for i, ds in enumerate(next_6):
                         if i < horizon:
                             row = future_rows[i].copy()
                         else:
                             d = auto_dummies(ds)
                             row = {
-                                'ds': ds,
-                                'unique_id': 'inflasi',
+                                'ds'                : ds,
+                                'unique_id'         : 'inflasi',
                                 'Harga Minyak Dunia': future_rows[-1]['Harga Minyak Dunia'],
-                                'BI Rate':            future_rows[-1]['BI Rate'],
-                                'Kurs USD/IDR':       future_rows[-1]['Kurs USD/IDR'],
+                                'BI Rate'           : future_rows[-1]['BI Rate'],
+                                'Kurs USD/IDR'      : future_rows[-1]['Kurs USD/IDR'],
                                 **d
                             }
                         all_future_rows.append(row)
 
                     futr_df = pd.DataFrame(all_future_rows)
 
-                    # ── 2. LAG (pakai historis terakhir) ───────────────────
-                    lag_vals = compute_lags(hist_df['y'])
+                    # ── 3. Lag dari data historis UNSCALED ────────────────
+                    # Ambil y_orig (unscaled) bukan y (scaled)
+                    y_hist_orig = df_asli.sort_values('ds')['y_orig'].values
 
-                    for k in ['lag1','lag3','lag6','lag12']:
-                        futr_df[k] = lag_vals[k]
+                    futr_df['lag1']  = y_hist_orig[-1]
+                    futr_df['lag3']  = y_hist_orig[-3]
+                    futr_df['lag6']  = y_hist_orig[-6]
+                    futr_df['lag12'] = y_hist_orig[-12]
 
-                    # ⚠️ NOTE:
-                    # ini masih "static lag"
-                    # (lebih advanced: recursive update, tapi ini sudah cukup OK)
-
-                    # ── 3. Scaling (WAJIB urutan sama training) ────────────
-                    EXOG_ORDER = [
-                        'Harga Minyak Dunia','BI Rate','Kurs USD/IDR',
-                        'lag1','lag3','lag6','lag12'
-                    ]
-
+                    # ── 4. Scale eksogen ──────────────────────────────────
+                    EXOG_ORDER = ['Harga Minyak Dunia', 'BI Rate', 'Kurs USD/IDR',
+                                'lag1', 'lag3', 'lag6', 'lag12']
                     futr_df[EXOG_ORDER] = scaler_exog.transform(futr_df[EXOG_ORDER])
 
-                    # ── 4. Final format ───────────────────────────────────
-                    futr_df = futr_df[['unique_id','ds'] + ALL_EXOG]
-                    hist_pred = hist_df[['unique_id','ds','y'] + ALL_EXOG].copy()
+                    # ── 5. Format final futr_df ───────────────────────────
+                    DUMMY_COLS = ['Ramadhan', 'Idulfitri', 'Natal', 'Imlek']
+                    futr_df = futr_df[['unique_id', 'ds'] + DUMMY_COLS]
 
-                    # ── 5. Predict ────────────────────────────────────────
-                    preds = nf.predict(df=hist_pred, futr_df=futr_df)
+                    # ── 6. RETRAIN model dengan full_df ───────────────────
+                    from neuralforecast import NeuralForecast
+                    from neuralforecast.models import NBEATSx
 
-                    pred_col = [c for c in preds.columns if c not in ['unique_id','ds']][0]
-                    y_pred_sc = preds[pred_col].values[:horizon]
+                    model_pred = NBEATSx(
+                        h=6,
+                        input_size=best_v2['input_size'],
+                        stack_types=['trend', 'seasonality'],
+                        n_blocks=best_v2['n_blocks'],
+                        mlp_units=[[best_v2['hidden_size'], best_v2['hidden_size']],
+                                [best_v2['hidden_size'], best_v2['hidden_size']]],
+                        learning_rate=best_v2['lr'],
+                        max_steps=best_v2['max_steps'],
+                        dropout_prob_theta=best_v2['dropout'],
+                        hist_exog_list=EXOG_ORDER,
+                        futr_exog_list=DUMMY_COLS,
+                        scaler_type=None
+                    )
 
-                    # ── 6. Inverse scaling ────────────────────────────────
+                    nf_pred = NeuralForecast(models=[model_pred], freq='MS')
+                    nf_pred.fit(df=full_df)  # retrain dengan semua data
+                    preds   = nf_pred.predict(futr_df=futr_df)
+
+                    # ── 7. Inverse transform ──────────────────────────────
+                    pred_col   = [c for c in preds.columns
+                                if c not in ['unique_id', 'ds']][0]
+                    y_pred_sc  = preds[pred_col].values[:horizon]
                     y_pred_dec = scaler_y.inverse_transform(
-                        y_pred_sc.reshape(-1,1)
+                        y_pred_sc.reshape(-1, 1)
                     ).flatten()
 
-                    y_pred = to_pct(y_pred_dec)
+                    # to_pct: y_pred_dec dalam desimal (0.02 = 2%)
+                    # kalikan 100 hanya SEKALI
+                    y_pred_pct = y_pred_dec * 100
 
-                    # ── RESULTS ──────────────────────────────────────────
+                    # ── DEBUG (hapus setelah konfirmasi benar) ────────────
+                    st.write("DEBUG y_pred_dec (desimal):", y_pred_dec.round(4))
+                    st.write("DEBUG y_pred_pct (%):", y_pred_pct.round(4))
+
+                    # ── 8. Tampilkan hasil ────────────────────────────────
                     st.markdown("---")
                     st.markdown("<div class='section-label'>Forecast Results</div>",
                                 unsafe_allow_html=True)
 
                     cols_res = st.columns(min(horizon, 3))
 
-                    for i, (ds, yp) in enumerate(zip(target_months, y_pred)):
+                    for i, (ds, yp) in enumerate(zip(next_6[:horizon], y_pred_pct)):
                         level, color, bg, badge_bg = inflation_level(yp)
 
                         with cols_res[i % 3]:
-                            st.markdown(f"""<div class='result-block'
+                            st.markdown(f"""
+                            <div class='result-block'
                             style='border-left-color:{color};background:{bg};'>
                             <div class='result-period'>{ds.strftime('%B %Y')}</div>
-                            <div class='result-value'>{yp:.2f}<span class='result-pct'>%</span></div>
-                            <span class='result-badge' style='background:{badge_bg};color:{color};'>
+                            <div class='result-value'>{yp:.2f}
+                                <span class='result-pct'>%</span>
+                            </div>
+                            <span class='result-badge'
+                            style='background:{badge_bg};color:{color};'>
                                 {level}
                             </span>
                             </div>""", unsafe_allow_html=True)
+
+                except Exception as e:
+                    st.error(f"❌ Error: {str(e)}")
+                    st.exception(e)
 
                     # ── CHART ─────────────────────────────────────────────
                     st.markdown("<br/><div class='section-label'>Historical + Forecast Chart</div>",
@@ -1230,14 +1254,3 @@ elif nav == "📊 Model Evaluation":
     • Pastikan urutan waktu <b>ascending</b>
     </div>
     """, unsafe_allow_html=True)
-
-    # ── DOWNLOAD TEMPLATE ───────────────────────────────
-    st.markdown("<br/>", unsafe_allow_html=True)
-
-    st.download_button(
-        "⬇ Download Template CSV",
-        make_template_csv(),
-        file_name="template_inflasi.csv",
-        mime="text/csv",
-        use_container_width=True
-    )
