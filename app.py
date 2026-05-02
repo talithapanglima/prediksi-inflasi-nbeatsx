@@ -1233,10 +1233,10 @@ elif nav == "📊 Model Evaluation":
     st.markdown("""
     <div class='alert-warn' style='margin-top:1rem;'>
     ⚠️ <b>Important:</b><br/>
-    • Data harus <b>bulanan (monthly)</b><br/>
-    • Tidak boleh ada <b>missing month</b><br/>
-    • Minimal <b>12 observasi</b> (untuk lag features)<br/>
-    • Jangan melakukan <b>scaling manual</b> — sistem akan handle otomatis<br/>
-    • Pastikan urutan waktu <b>ascending</b>
+    - Data must be <b>monthly frequency</b><br/>
+    - <b>No missing months</b> allowed in the time series<br/>
+    - Minimum <b>12 observations</b> required (for lag features)<br/>
+    - Do <b>not</b> manually scale your data — the system handles it automatically<br/>
+    - Ensure the time order is <b>ascending</b> (oldest → newest)
     </div>
     """, unsafe_allow_html=True)
