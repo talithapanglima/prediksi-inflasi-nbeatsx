@@ -1044,7 +1044,7 @@ elif nav == "📤 Upload & Forecast":
                         marker=dict(size=8)
                     ))
                     fig2.update_layout(**plotly_base("Forecast (%)", height=360))
-                    st.plotly_chart(fig2, use_container_width=True)
+                    st.plotly_chart(fig2, use_container_width=True, key="chart_forecast")
 
                     # ── 10. Table ──────────────────────────────────
                     st.markdown("<div class='section-label'>Forecast Table</div>",
@@ -1092,7 +1092,7 @@ elif nav == "📤 Upload & Forecast":
                     ))
 
                     fig2.update_layout(**plotly_base("Forecast (%)", height=360))
-                    st.plotly_chart(fig2, use_container_width=True)
+                    st.plotly_chart(fig, use_container_width=True, key="chart_home")
 
                 except Exception as e:
                     st.markdown(
@@ -1175,7 +1175,7 @@ elif nav == "📊 Model Evaluation":
             fig4.add_trace(go.Scatter(x=ds_vals, y=y_pred, name="Forecast", mode="lines+markers", line=dict(dash="dot")))
 
             fig4.update_layout(**plotly_base("Actual vs Forecast (%)", height=340))
-            st.plotly_chart(fig4, use_container_width=True)
+            st.plotly_chart(fig4, use_container_width=True, key="chart_eval_main")
 
             # ── RESIDUAL ───────────────────────────────
             residuals = y_true - y_pred
@@ -1192,7 +1192,7 @@ elif nav == "📊 Model Evaluation":
             fig5.add_trace(go.Histogram(x=residuals, nbinsx=15), row=1, col=2)
 
             fig5.update_layout(height=280)
-            st.plotly_chart(fig5, use_container_width=True)
+            st.plotly_chart(fig5, use_container_width=True, key="chart_eval_residual")
 
             # ── TABLE ──────────────────────────────────
             st.markdown("<div class='section-label'>Detail Table</div>", unsafe_allow_html=True)
