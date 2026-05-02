@@ -831,14 +831,17 @@ elif nav == "📤 Upload & Forecast":
             )
 
             # ── PREVIEW ───────────────────────────────────────
+            # ── PREVIEW ───────────────────────────────────────
             with st.expander("🔍 Preview (last 5 rows)", expanded=False):
                 disp = hist_df[['ds'] + FUTR_EXOG].tail(5).copy()
 
-                disp['inflation (%)'] = to_pct(raw_y)
-
+                # ✅ Definisikan raw_y DULU
                 raw_y = scaler_y.inverse_transform(
                     hist_df[['y']].tail(5)
                 ).flatten()
+
+                # ✅ Baru pakai raw_y
+                disp['inflation (%)'] = to_pct(raw_y)
 
                 st.dataframe(disp, use_container_width=True, hide_index=True)
 
