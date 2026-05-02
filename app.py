@@ -963,14 +963,14 @@ elif nav == "📤 Upload & Forecast":
                     # ── 6. RETRAIN model ───────────────────────────
                     model_pred = NBEATSx(
                         h=6,
-                        input_size=best_v2['input_size'],
+                        input_size=best_params['input_size'],
                         stack_types=['trend', 'seasonality'],
-                        n_blocks=best_v2['n_blocks'],
-                        mlp_units=[[best_v2['hidden_size'], best_v2['hidden_size']],
-                                   [best_v2['hidden_size'], best_v2['hidden_size']]],
-                        learning_rate=best_v2['lr'],
-                        max_steps=best_v2['max_steps'],
-                        dropout_prob_theta=best_v2['dropout'],
+                        n_blocks=best_params['n_blocks'],
+                        mlp_units=[[best_params['hidden_size'], best_params['hidden_size']],
+                                   [best_params['hidden_size'], best_params['hidden_size']]],
+                        learning_rate=best_params['lr'],
+                        max_steps=best_params['max_steps'],
+                        dropout_prob_theta=best_params['dropout'],
                         hist_exog_list=EXOG_ORDER,
                         futr_exog_list=DUMMY_COLS,
                         scaler_type=None
@@ -1056,25 +1056,15 @@ elif nav == "📤 Upload & Forecast":
                     })
                     st.dataframe(result_df, use_container_width=True, hide_index=True)
 
-                except Exception as e:
-                    st.markdown(
-                        f"<div class='alert-err'>❌ <b>Error:</b><br/><code>{e}</code></div>",
-                        unsafe_allow_html=True
-                    )
-                    import traceback
-                    with st.expander("Traceback"):
-                        st.code(traceback.format_exc())
-
                     # ── CHART ─────────────────────────────────────────────
                     st.markdown("<br/><div class='section-label'>Historical + Forecast Chart</div>",
                                 unsafe_allow_html=True)
 
-                    last_24   = df_asli.tail(24)
+                    last_24   = df_asli.sort_values('ds').tail(24)
                     last_24_y = to_pct(last_24['y_orig'].values)
 
                     fig2 = go.Figure()
 
-                    # historis
                     fig2.add_trace(go.Scatter(
                         x=last_24['ds'], y=last_24_y,
                         name="Historical (24 mo)",
@@ -1084,7 +1074,6 @@ elif nav == "📤 Upload & Forecast":
                         fillcolor="rgba(87,83,78,0.12)"
                     ))
 
-                    # garis penghubung (biar smooth)
                     fig2.add_trace(go.Scatter(
                         x=[last_24['ds'].iloc[-1], target_months[0]],
                         y=[last_24_y[-1], y_pred[0]],
@@ -1093,7 +1082,6 @@ elif nav == "📤 Upload & Forecast":
                         showlegend=False
                     ))
 
-                    # forecast
                     fig2.add_trace(go.Scatter(
                         x=list(target_months),
                         y=list(y_pred),
@@ -1106,21 +1094,11 @@ elif nav == "📤 Upload & Forecast":
                     fig2.update_layout(**plotly_base("Forecast (%)", height=360))
                     st.plotly_chart(fig2, use_container_width=True)
 
-                    # ── TABLE ─────────────────────────────────────────────
-                    st.markdown("<div class='section-label'>Forecast Table</div>",
-                                unsafe_allow_html=True)
-
-                    result_df = pd.DataFrame({
-                        "Month":        [m.strftime("%B %Y") for m in target_months],
-                        "Forecast (%)": np.round(y_pred, 4),
-                    })
-
-                    st.dataframe(result_df, use_container_width=True, hide_index=True)
-
                 except Exception as e:
-                    st.markdown(f"<div class='alert-err'>❌ <b>Error:</b><br/><code>{e}</code></div>",
-                                unsafe_allow_html=True)
-
+                    st.markdown(
+                        f"<div class='alert-err'>❌ <b>Error:</b><br/><code>{e}</code></div>",
+                        unsafe_allow_html=True
+                    )
                     import traceback
                     with st.expander("Traceback"):
                         st.code(traceback.format_exc())
