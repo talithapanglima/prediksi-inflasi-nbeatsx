@@ -851,7 +851,7 @@ elif nav == "📤 Upload & Forecast":
                 disp['Inflation (%)']       = to_pct(raw_y).round(4)
                 disp['Oil Price (USD)']     = raw_exog_df['Harga Minyak Dunia'].round(2).values
                 disp['BI Rate (%)']         = (raw_exog_df['BI Rate'] * 100).round(2).values
-                disp['USD/IDR']             = raw_exog_df['Kurs USD/IDR'].round(0).astype(int).values
+                disp['Exchange Rate USD/IDR']             = raw_exog_df['Kurs USD/IDR'].round(0).astype(int).values
 
                 # Urutkan kolom
                 disp = disp[['ds', 'Inflation (%)', 'Oil Price (USD)', 'BI Rate (%)',
