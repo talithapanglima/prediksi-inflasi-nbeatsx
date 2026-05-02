@@ -830,17 +830,32 @@ elif nav == "📤 Upload & Forecast":
                 unsafe_allow_html=True
             )
 
-            # ── PREVIEW ───────────────────────────────────────
+           # ── PREVIEW ───────────────────────────────────────
             with st.expander("🔍 Preview (last 5 rows)", expanded=False):
-                disp = hist_df[['ds'] + FUTR_EXOG].tail(5).copy()
 
-                # ✅ Definisikan raw_y DULU
+                # Inverse transform y
                 raw_y = scaler_y.inverse_transform(
                     hist_df[['y']].tail(5)
                 ).flatten()
 
-                # ✅ Baru pakai raw_y
-                disp['inflation (%)'] = to_pct(raw_y)
+                # Inverse transform eksogen numerik
+                EXOG_ORDER = ['Harga Minyak Dunia', 'BI Rate', 'Kurs USD/IDR',
+                            'lag1', 'lag3', 'lag6', 'lag12']
+                raw_exog = scaler_exog.inverse_transform(
+                    hist_df[EXOG_ORDER].tail(5)
+                )
+                raw_exog_df = pd.DataFrame(raw_exog, columns=EXOG_ORDER)
+
+                # Susun tampilan
+                disp = hist_df[['ds'] + FUTR_EXOG].tail(5).copy().reset_index(drop=True)
+                disp['Inflation (%)']       = to_pct(raw_y).round(4)
+                disp['Oil Price (USD)']     = raw_exog_df['Harga Minyak Dunia'].round(2).values
+                disp['BI Rate (%)']         = (raw_exog_df['BI Rate'] * 100).round(2).values
+                disp['USD/IDR']             = raw_exog_df['Kurs USD/IDR'].round(0).astype(int).values
+
+                # Urutkan kolom
+                disp = disp[['ds', 'Inflation (%)', 'Oil Price (USD)', 'BI Rate (%)',
+                            'USD/IDR', 'Ramadhan', 'Idulfitri', 'Natal', 'Imlek']]
 
                 st.dataframe(disp, use_container_width=True, hide_index=True)
 
