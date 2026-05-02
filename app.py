@@ -831,7 +831,6 @@ elif nav == "📤 Upload & Forecast":
             )
 
             # ── PREVIEW ───────────────────────────────────────
-            # ── PREVIEW ───────────────────────────────────────
             with st.expander("🔍 Preview (last 5 rows)", expanded=False):
                 disp = hist_df[['ds'] + FUTR_EXOG].tail(5).copy()
 
@@ -914,16 +913,19 @@ elif nav == "📤 Upload & Forecast":
             })
 
        # ── STEP 3 ──────────────────────────────────────────────────
+        # Pastikan ini DALAM blok if uploaded is not None:
+        run = st.button("▶  Run Forecast")
+
         if run:
             with st.spinner("Running model inference…"):
                 try:
-                    # ── 1. Future dates ───────────────────────────────────
+                    # ── 1. Future dates ───────────────────────────
                     next_6 = pd.date_range(
                         start=hist_df['ds'].max() + pd.DateOffset(months=1),
                         periods=6, freq='MS'
                     )
 
-                    # ── 2. Susun future_rows ──────────────────────────────
+                    # ── 2. Susun future_rows ──────────────────────
                     all_future_rows = []
                     for i, ds in enumerate(next_6):
                         if i < horizon:
@@ -942,35 +944,30 @@ elif nav == "📤 Upload & Forecast":
 
                     futr_df = pd.DataFrame(all_future_rows)
 
-                    # ── 3. Lag dari data historis UNSCALED ────────────────
-                    # Ambil y_orig (unscaled) bukan y (scaled)
+                    # ── 3. Lag dari data historis UNSCALED ─────────
                     y_hist_orig = df_asli.sort_values('ds')['y_orig'].values
-
                     futr_df['lag1']  = y_hist_orig[-1]
                     futr_df['lag3']  = y_hist_orig[-3]
                     futr_df['lag6']  = y_hist_orig[-6]
                     futr_df['lag12'] = y_hist_orig[-12]
 
-                    # ── 4. Scale eksogen ──────────────────────────────────
+                    # ── 4. Scale eksogen ───────────────────────────
                     EXOG_ORDER = ['Harga Minyak Dunia', 'BI Rate', 'Kurs USD/IDR',
-                                'lag1', 'lag3', 'lag6', 'lag12']
+                                  'lag1', 'lag3', 'lag6', 'lag12']
                     futr_df[EXOG_ORDER] = scaler_exog.transform(futr_df[EXOG_ORDER])
 
-                    # ── 5. Format final futr_df ───────────────────────────
+                    # ── 5. Format final futr_df ────────────────────
                     DUMMY_COLS = ['Ramadhan', 'Idulfitri', 'Natal', 'Imlek']
                     futr_df = futr_df[['unique_id', 'ds'] + DUMMY_COLS]
 
-                    # ── 6. RETRAIN model dengan full_df ───────────────────
-                    from neuralforecast import NeuralForecast
-                    from neuralforecast.models import NBEATSx
-
+                    # ── 6. RETRAIN model ───────────────────────────
                     model_pred = NBEATSx(
                         h=6,
                         input_size=best_v2['input_size'],
                         stack_types=['trend', 'seasonality'],
                         n_blocks=best_v2['n_blocks'],
                         mlp_units=[[best_v2['hidden_size'], best_v2['hidden_size']],
-                                [best_v2['hidden_size'], best_v2['hidden_size']]],
+                                   [best_v2['hidden_size'], best_v2['hidden_size']]],
                         learning_rate=best_v2['lr'],
                         max_steps=best_v2['max_steps'],
                         dropout_prob_theta=best_v2['dropout'],
@@ -980,35 +977,27 @@ elif nav == "📤 Upload & Forecast":
                     )
 
                     nf_pred = NeuralForecast(models=[model_pred], freq='MS')
-                    nf_pred.fit(df=full_df)  # retrain dengan semua data
+                    nf_pred.fit(df=full_df)
                     preds   = nf_pred.predict(futr_df=futr_df)
 
-                    # ── 7. Inverse transform ──────────────────────────────
+                    # ── 7. Inverse transform ───────────────────────
                     pred_col   = [c for c in preds.columns
-                                if c not in ['unique_id', 'ds']][0]
+                                  if c not in ['unique_id', 'ds']][0]
                     y_pred_sc  = preds[pred_col].values[:horizon]
                     y_pred_dec = scaler_y.inverse_transform(
                         y_pred_sc.reshape(-1, 1)
                     ).flatten()
+                    y_pred     = y_pred_dec * 100  # desimal → persen
+                    target_months = next_6[:horizon]
 
-                    # to_pct: y_pred_dec dalam desimal (0.02 = 2%)
-                    # kalikan 100 hanya SEKALI
-                    y_pred_pct = y_pred_dec * 100
-
-                    # ── DEBUG (hapus setelah konfirmasi benar) ────────────
-                    st.write("DEBUG y_pred_dec (desimal):", y_pred_dec.round(4))
-                    st.write("DEBUG y_pred_pct (%):", y_pred_pct.round(4))
-
-                    # ── 8. Tampilkan hasil ────────────────────────────────
+                    # ── 8. Hasil cards ─────────────────────────────
                     st.markdown("---")
                     st.markdown("<div class='section-label'>Forecast Results</div>",
                                 unsafe_allow_html=True)
 
                     cols_res = st.columns(min(horizon, 3))
-
-                    for i, (ds, yp) in enumerate(zip(next_6[:horizon], y_pred_pct)):
+                    for i, (ds, yp) in enumerate(zip(target_months, y_pred)):
                         level, color, bg, badge_bg = inflation_level(yp)
-
                         with cols_res[i % 3]:
                             st.markdown(f"""
                             <div class='result-block'
@@ -1023,9 +1012,58 @@ elif nav == "📤 Upload & Forecast":
                             </span>
                             </div>""", unsafe_allow_html=True)
 
+                    # ── 9. Chart ───────────────────────────────────
+                    st.markdown("<br/><div class='section-label'>Historical + Forecast Chart</div>",
+                                unsafe_allow_html=True)
+
+                    last_24   = df_asli.tail(24)
+                    last_24_y = to_pct(last_24['y_orig'].values)
+
+                    fig2 = go.Figure()
+                    fig2.add_trace(go.Scatter(
+                        x=last_24['ds'], y=last_24_y,
+                        name="Historical (24 mo)",
+                        mode="lines",
+                        line=dict(color=C_HIST, width=2),
+                        fill="tozeroy",
+                        fillcolor="rgba(87,83,78,0.12)"
+                    ))
+                    fig2.add_trace(go.Scatter(
+                        x=[last_24['ds'].iloc[-1], target_months[0]],
+                        y=[last_24_y[-1], y_pred[0]],
+                        mode="lines",
+                        line=dict(dash="dot", width=1),
+                        showlegend=False
+                    ))
+                    fig2.add_trace(go.Scatter(
+                        x=list(target_months),
+                        y=list(y_pred),
+                        name="Forecast",
+                        mode="lines+markers",
+                        line=dict(color=C_PRED, width=2.5),
+                        marker=dict(size=8)
+                    ))
+                    fig2.update_layout(**plotly_base("Forecast (%)", height=360))
+                    st.plotly_chart(fig2, use_container_width=True)
+
+                    # ── 10. Table ──────────────────────────────────
+                    st.markdown("<div class='section-label'>Forecast Table</div>",
+                                unsafe_allow_html=True)
+
+                    result_df = pd.DataFrame({
+                        "Month"        : [m.strftime("%B %Y") for m in target_months],
+                        "Forecast (%)" : np.round(y_pred, 4),
+                    })
+                    st.dataframe(result_df, use_container_width=True, hide_index=True)
+
                 except Exception as e:
-                    st.error(f"❌ Error: {str(e)}")
-                    st.exception(e)
+                    st.markdown(
+                        f"<div class='alert-err'>❌ <b>Error:</b><br/><code>{e}</code></div>",
+                        unsafe_allow_html=True
+                    )
+                    import traceback
+                    with st.expander("Traceback"):
+                        st.code(traceback.format_exc())
 
                     # ── CHART ─────────────────────────────────────────────
                     st.markdown("<br/><div class='section-label'>Historical + Forecast Chart</div>",
